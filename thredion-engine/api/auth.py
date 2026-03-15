@@ -193,7 +193,7 @@ def verify_otp(phone: str, code: str, db: Session = Depends(get_db)):
         "user": {
             "id": user.id,
             "phone_number": user.phone_number,
-            "name": user.name,
+            "name": user.username,
             "created_at": user.created_at.isoformat(),
         },
     }
@@ -205,6 +205,6 @@ def get_me(user: User = Depends(get_current_user)):
     return {
         "id": user.id,
         "phone_number": user.phone_number,
-        "name": user.name,
+        "name": user.username,
         "created_at": user.created_at.isoformat(),
     }
