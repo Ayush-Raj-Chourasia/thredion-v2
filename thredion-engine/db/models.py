@@ -7,12 +7,43 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import (
     Boolean, Column, String, Float, Text, DateTime, LargeBinary, ForeignKey,
-    UniqueConstraint, Integer
+    UniqueConstraint, Integer, JSON
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+import sqlalchemy.types as types
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB
 from sqlalchemy.orm import relationship
 from db.database import Base
 
+# Safe JSON type that creates JSONB on postgres but normal JSON on SQLite
+SafeJSON = JSON().with_variant(JSONB, 'postgresql')
+
+class GUID(types.TypeDecorator):
+    """Platform-independent GUID type."""
+    impl = types.String
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(PG_UUID(as_uuid=True))
+        else:
+            return dialect.type_descriptor(types.String(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        else:
+            if not isinstance(value, uuid.UUID):
+                return "%.32x" % uuid.UUID(str(value)).int
+            else:
+                return "%.32x" % value.int
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        else:
+            if not isinstance(value, uuid.UUID):
+                value = uuid.UUID(value)
+            return value
 
 def _utcnow():
     return datetime.now(timezone.utc)
@@ -22,7 +53,7 @@ class User(Base):
     """A registered user, identified by their WhatsApp phone number."""
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     phone_number = Column(String(50), unique=True, nullable=False, index=True)
     username = Column(String(200), default="")
     email = Column(String(200), nullable=True)
@@ -55,8 +86,8 @@ class Memory(Base):
     """A single cognitive memory — a saved link with AI-enriched metadata."""
     __tablename__ = "memories"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     
     source = Column(String(50), default="unknown")       # instagram, twitter, article, youtube
     source_url = Column(String(2048), nullable=True, index=True)
@@ -66,11 +97,11 @@ class Memory(Base):
     
     title = Column(String(512), default="")
     summary = Column(Text, default="")
-    key_points = Column(JSONB, default=[])
+    key_points = Column(SafeJSON, default=[])
     category = Column(String(100), default="Uncategorized")
-    tags = Column(JSONB, default=[])
+    tags = Column(SafeJSON, default=[])
     importance_score = Column(Float, default=0.0)
-    importance_reasons = Column(JSONB, default=[])
+    importance_reasons = Column(SafeJSON, default=[])
     embedding = Column(LargeBinary, nullable=True) # bytea in postgres
     
     resurfaced_count = Column(Integer, default=0)
@@ -93,10 +124,10 @@ class Connection(Base):
     """An edge in the knowledge graph — links two related memories."""
     __tablename__ = "connections"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    source_id = Column(UUID(as_uuid=True), ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
-    target_id = Column(UUID(as_uuid=True), ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    source_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
+    target_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
     similarity_score = Column(Float, nullable=False, default=0.0)
     connection_type = Column(String(50), default="similar")
     created_at = Column(DateTime(timezone=True), default=_utcnow)
@@ -106,10 +137,10 @@ class ResurfacedMemory(Base):
     """Tracks when an older memory is resurfaced because a new one is similar."""
     __tablename__ = "resurfaced_memories"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    memory_id = Column(UUID(as_uuid=True), ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
-    triggered_by_id = Column(UUID(as_uuid=True), ForeignKey("memories.id", ondelete="CASCADE"), nullable=True)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    memory_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
+    triggered_by_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=True)
     resurfaced_at = Column(DateTime(timezone=True), default=_utcnow)
     reason = Column(Text, default="")
     similarity_score = Column(Float, default=0.0)
@@ -120,8 +151,8 @@ class CognitiveEntry(Base):
     """Spec-compliant unified storage for cognitive entries (Learn/Think/Reflect)."""
     __tablename__ = "cognitive_entries"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     input_type = Column(String(50), nullable=False)  # link, voice, text
     cognitive_mode = Column(String(50), nullable=False) # learn, think, reflect
     original_input = Column(Text, nullable=False)
@@ -129,9 +160,9 @@ class CognitiveEntry(Base):
     cleaned_text = Column(Text, default="")
     summary = Column(Text, default="")
     title = Column(String(512), default="")
-    key_points = Column(JSONB, default=[])
+    key_points = Column(SafeJSON, default=[])
     bucket = Column(String(100), default="Uncategorized")
-    tags = Column(JSONB, default=[])
+    tags = Column(SafeJSON, default=[])
     actionability_score = Column(Float, default=0.0)
     emotional_tone = Column(String(100), default="")
     confidence_score = Column(Float, default=0.0)
@@ -146,8 +177,8 @@ class Bucket(Base):
     """Spec-compliant bucket system (Cap at 20 per user)."""
     __tablename__ = "buckets"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     name = Column(String(100), nullable=False)
     entry_count = Column(Integer, default=0)
     created_at = Column(DateTime(timezone=True), default=_utcnow)
