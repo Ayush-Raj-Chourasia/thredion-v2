@@ -52,7 +52,7 @@ async def process_url(url: str, user_id: str, db: Session) -> dict:
         ) else normalized_url
         
         # Get user ID from phone
-        user = db.query(User).filter(User.phone_number == user_id).first()
+        user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise ValueError(f"User {user_id} not found")
         user_id = user.id
@@ -193,7 +193,7 @@ async def process_video_url_async(
         ) else normalized_url
         
         # Get user ID from phone
-        user = db.query(User).filter(User.phone_number == user_id).first()
+        user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise ValueError(f"User {user_id} not found")
         user_id = user.id
@@ -252,7 +252,7 @@ async def process_video_url_async(
         
         # ── Step 4: Structure with LLM ──────────────────────────
         logger.info("[VIDEO PIPELINE] Processing with Groq LLM...")
-        user = db.query(User).filter(User.phone == user_id).first()
+        user = db.query(User).filter(User.id == user_id).first()
         existing_buckets = []  # TODO: Get from user.buckets if available
         
         structured = await process_with_groq(

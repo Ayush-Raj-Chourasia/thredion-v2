@@ -35,16 +35,16 @@ async def process_queue_message(message: QueueMessage) -> bool:
         job_data = json.loads(message.content)
         job_id = job_data.get('job_id')
         url = job_data.get('url')
-        user_phone = job_data.get('user_phone')
+        user_id = job_data.get('user_id')
         
-        logger.info(f"[WORKER] Processing job {job_id[:8]}... for {user_phone}")
+        logger.info(f"[WORKER] Processing job {job_id[:8]}... for {user_id}")
         
         db = SessionLocal()
         try:
             # Find the memory record
             memory = db.query(Memory).filter(
                 Memory.transcription_job_id == job_id,
-                Memory.user_phone == user_phone
+                Memory.user_id == user_id
             ).first()
             
             if not memory:
@@ -77,7 +77,7 @@ async def process_queue_message(message: QueueMessage) -> bool:
             memory.transcript_source = 'local_async'
             
             # Structure with LLM
-            user = db.query(User).filter(User.phone == user_phone).first()
+            user = db.query(User).filter(User.id == user_id).first()
             existing_buckets = []  # TODO: Get from user.buckets if available
             
             logger.info(f"[WORKER] Structuring with LLM...")
@@ -201,7 +201,7 @@ async def process_pending_jobs():
             job_data = {
                 'job_id': memory.transcription_job_id,
                 'url': memory.url,
-                'user_phone': memory.user_phone,
+                'user_id': memory.user_id,
             }
             
             # Simulate message
