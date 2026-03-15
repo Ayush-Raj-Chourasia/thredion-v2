@@ -34,19 +34,14 @@ COPY . .
 
 # Health check for deployment platforms
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)" || exit 1
+    CMD python -c "import os, requests; port = os.environ.get('PORT', '8000'); requests.get(f'http://localhost:{port}/health', timeout=5)" || exit 1
 
-# Expose port (Render automatically detects from EXPOSE)
+# Expose port (Render/Railway automatically detects from EXPOSE or PORT env var)
 EXPOSE 8000
 
 # Run with Gunicorn for production
-# Workers: 1 (Render Free has limited RAM)
+# Workers: 1 (Free tiers have limited RAM)
 # Threads: 4 (efficient for I/O-bound operations)
 # Worker class: uvicorn (async support for FastAPI)
-CMD ["gunicorn", "main:app", \
-     "--workers=1", \
-     "--worker-class=uvicorn.workers.UvicornWorker", \
-     "--bind=0.0.0.0:8000", \
-     "--timeout=120", \
-     "--access-logfile=-", \
-     "--error-logfile=-"]
+# Using shell form to correctly evaluate the $PORT variable provided by Railway
+CMD gunicorn main:app --workers=1 --worker-class=uvicorn.workers.UvicornWorker --bind=0.0.0.0:${PORT:-8000} --timeout=120 --access-logfile=- --error-logfile=-
