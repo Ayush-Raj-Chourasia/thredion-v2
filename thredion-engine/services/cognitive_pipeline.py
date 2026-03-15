@@ -84,7 +84,7 @@ class CognitiveEntry:
 
 async def process_cognitive_entry(
     url: str,
-    user_phone: str = "",
+    user_id: str = "",
     db_session=None,
     existing_buckets: Optional[List[str]] = None,
 ) -> CognitiveEntry:
@@ -317,7 +317,7 @@ PLATFORM_RATE_LIMITS = {
 
 async def process_batch(
     urls: List[str],
-    user_phone: str = "",
+    user_id: str = "",
     db_session=None,
     existing_buckets: Optional[List[str]] = None,
     max_concurrent: int = 3,
@@ -366,7 +366,7 @@ async def process_batch(
             
             try:
                 entry = await process_cognitive_entry(
-                    url, user_phone, db_session, existing_buckets
+                    url, user_id, db_session, existing_buckets
                 )
                 results.append(entry)
                 

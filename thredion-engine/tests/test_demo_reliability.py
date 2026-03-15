@@ -170,7 +170,7 @@ class TestResponseContract:
         required = [
             "id", "url", "platform", "title", "content", "summary",
             "category", "tags", "topic_graph", "importance_score",
-            "importance_reasons", "thumbnail_url", "user_phone", "created_at",
+            "importance_reasons", "thumbnail_url", "user_id", "created_at",
         ]
         for field in required:
             assert field in data, f"Missing field: {field}"

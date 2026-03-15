@@ -194,3 +194,4 @@ deploy_temp/
 tmp/
 temp/
 !thredion-dashboard/src/lib/
+*.txt

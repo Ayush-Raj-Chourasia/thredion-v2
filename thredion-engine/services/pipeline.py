@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 _process_lock = threading.Lock()
 
 
-async def process_url(url: str, user_phone: str, db: Session) -> dict:
+async def process_url(url: str, user_id: str, db: Session) -> dict:
     """
     Full cognitive pipeline: URL → extract → embed → classify → graph → score → resurface.
     Returns a dict with all results for the WhatsApp reply and API response.
@@ -52,9 +52,9 @@ async def process_url(url: str, user_phone: str, db: Session) -> dict:
         ) else normalized_url
         
         # Get user ID from phone
-        user = db.query(User).filter(User.phone_number == user_phone).first()
+        user = db.query(User).filter(User.phone_number == user_id).first()
         if not user:
-            raise ValueError(f"User {user_phone} not found")
+            raise ValueError(f"User {user_id} not found")
         user_id = user.id
 
         existing = (
@@ -170,7 +170,7 @@ async def process_url(url: str, user_phone: str, db: Session) -> dict:
 
 async def process_video_url_async(
     url: str,
-    user_phone: str,
+    user_id: str,
     db: Session,
 ) -> Dict[str, Any]:
     """
@@ -193,9 +193,9 @@ async def process_video_url_async(
         ) else normalized_url
         
         # Get user ID from phone
-        user = db.query(User).filter(User.phone_number == user_phone).first()
+        user = db.query(User).filter(User.phone_number == user_id).first()
         if not user:
-            raise ValueError(f"User {user_phone} not found")
+            raise ValueError(f"User {user_id} not found")
         user_id = user.id
 
         existing = (
@@ -237,7 +237,7 @@ async def process_video_url_async(
     
     # ── Step 3: Process video (transcribe) ───────────────────
     logger.info("[VIDEO PIPELINE] Processing video transcription...")
-    transcription_result = await process_video(url, user_phone, db)
+    transcription_result = await process_video(url, user_id, db)
     
     # ── Handle transcription result ──────────────────────────
     if transcription_result['status'] == 'completed':
@@ -252,7 +252,7 @@ async def process_video_url_async(
         
         # ── Step 4: Structure with LLM ──────────────────────────
         logger.info("[VIDEO PIPELINE] Processing with Groq LLM...")
-        user = db.query(User).filter(User.phone == user_phone).first()
+        user = db.query(User).filter(User.phone == user_id).first()
         existing_buckets = []  # TODO: Get from user.buckets if available
         
         structured = await process_with_groq(

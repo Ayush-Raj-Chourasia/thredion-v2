@@ -75,7 +75,7 @@ class CostTracker:
         self.cost_logs = []  # In-memory, replace with DB query in production
     
     def should_use_paid_api(
-        self, service: CostService, user_phone: str
+        self, service: CostService, user_id: str
     ) -> Tuple[bool, str]:
         """
         Check if we should call a paid API.
@@ -130,7 +130,7 @@ class CostTracker:
         self,
         service: CostService,
         cost: float,
-        user_phone: str,
+        user_id: str,
         job_id: str,
         success: bool,
         error_reason: str = None,
@@ -141,7 +141,7 @@ class CostTracker:
         In production, this would insert into cost_logs table:
         
         INSERT INTO cost_logs (
-            service, cost, user_phone, job_id, success, 
+            service, cost, user_id, job_id, success, 
             error_reason, timestamp
         ) VALUES (...)
         """
@@ -149,7 +149,7 @@ class CostTracker:
         log_entry = {
             "service": service.value,
             "cost": cost,
-            "user_phone": user_phone,
+            "user_id": user_id,
             "job_id": job_id,
             "success": success,
             "error_reason": error_reason,

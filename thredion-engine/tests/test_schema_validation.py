@@ -73,7 +73,7 @@ class TestCognitiveStructureDataPersistence:
         """Test that memory records with transcripts are properly stored."""
         # Create test memory
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test memory",
             is_video=True,
@@ -102,7 +102,7 @@ class TestCognitiveStructureDataPersistence:
     def test_cognitive_structure_fields_persist(self, db):
         """Test that all cognitive structure fields persist correctly."""
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
             is_video=True,
@@ -135,7 +135,7 @@ class TestCognitiveStructureDataPersistence:
     def test_job_tracking_fields_persist(self, db):
         """Test job tracking fields for async processing."""
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
             is_video=True,
@@ -179,7 +179,7 @@ class TestDataValidation:
         
         for mode in valid_modes:
             memory = Memory(
-                user_phone="1234567890",
+                user_id="1234567890",
                 source="phone",
                 raw_text="Test",
                 cognitive_mode=mode,
@@ -196,7 +196,7 @@ class TestDataValidation:
     def test_score_bounds_validation(self, db):
         """Test that scores are within valid bounds (0-1)."""
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
             actionability_score=0.75,
@@ -217,7 +217,7 @@ class TestDataValidation:
         """Test that transcript_length matches actual transcript length."""
         transcript = "This is a test transcript " * 20  # ~520 chars
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
             transcript=transcript,
@@ -236,7 +236,7 @@ class TestDataValidation:
     def test_video_duration_non_negative(self, db):
         """Test that video_duration is non-negative."""
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
             is_video=True,
@@ -263,7 +263,7 @@ class TestAsyncJobTracking:
     def test_job_status_transitions(self, db):
         """Test job status state transitions: pending → processing → completed."""
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
             is_video=True,
@@ -293,7 +293,7 @@ class TestAsyncJobTracking:
     def test_error_status_with_message(self, db):
         """Test error status with error message."""
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
             transcription_job_id="job-failed-001",
@@ -328,7 +328,7 @@ class TestQueryOptimization:
         job_id = "job-query-test-123"
         
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
             transcription_job_id=job_id,
@@ -353,7 +353,7 @@ class TestQueryOptimization:
         # Create test memories with different modes
         for mode in ['learn', 'think', 'reflect']:
             memory = Memory(
-                user_phone="1234567890",
+                user_id="1234567890",
                 source="phone",
                 raw_text=f"Test {mode}",
                 cognitive_mode=mode,
@@ -380,7 +380,7 @@ class TestQueryOptimization:
         
         for status in statuses:
             memory = Memory(
-                user_phone="1234567890",
+                user_id="1234567890",
                 source="phone",
                 raw_text=f"Test {status}",
                 transcription_status=status,
@@ -411,7 +411,7 @@ class TestBackwardsCompatibility:
     def test_text_memory_still_works(self, db):
         """Test that text-only memories still work without video fields."""
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Regular text memory",
             is_video=False,
@@ -432,7 +432,7 @@ class TestBackwardsCompatibility:
     def test_optional_fields_nullable(self, db):
         """Test that new fields are nullable for compatibility."""
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
         )

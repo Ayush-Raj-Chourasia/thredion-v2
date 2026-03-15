@@ -163,7 +163,7 @@ def create_memory(
     if not re.match(r'^https?://', url):
         raise HTTPException(status_code=400, detail="Invalid URL — must start with http:// or https://")
     try:
-        result = process_url(url, user.phone, db)
+        result = process_url(url, user.id, db)
         notify_change("memory_added", str(result.get("memory_id", "")))
         return result
     except Exception as e:
@@ -205,7 +205,7 @@ def process_endpoint(
     if not re.match(r'^https?://', url):
         raise HTTPException(status_code=400, detail="Invalid URL — must start with http:// or https://")
     try:
-        result = process_url(url, user.phone, db)
+        result = process_url(url, user.id, db)
         notify_change("memory_added", str(result.get("memory_id", "")))
         return result
     except Exception as e:
@@ -230,7 +230,7 @@ async def process_video_endpoint(
         raise HTTPException(status_code=400, detail="Invalid URL — must start with http:// or https://")
     
     try:
-        result = await process_video_url_async(url, user.phone, db)
+        result = await process_video_url_async(url, user.id, db)
         
         if result.get('status') == 'completed':
             notify_change("memory_added", str(result.get("memory_id", "")))
@@ -274,10 +274,10 @@ async def process_cognitive_endpoint(
         # Get user's existing buckets for better LLM bucketing
         existing_buckets = _get_user_buckets(user.id, db)
         
-        entry = await process_cognitive_entry(url, user.phone, db, existing_buckets)
+        entry = await process_cognitive_entry(url, user.id, db, existing_buckets)
         
         # Save to database
-        memory = _save_cognitive_entry(entry, user.phone, db)
+        memory = _save_cognitive_entry(entry, user.id, db)
         notify_change("memory_added", str(memory.id))
         
         return {
@@ -327,13 +327,13 @@ async def process_batch_endpoint(
     try:
         existing_buckets = _get_user_buckets(user.id, db)
         
-        entries = await process_batch(urls, user.phone, db, existing_buckets)
+        entries = await process_batch(urls, user.id, db, existing_buckets)
         
         # Save all entries to database
         results = []
         for entry in entries:
             try:
-                memory = _save_cognitive_entry(entry, user.phone, db)
+                memory = _save_cognitive_entry(entry, user.id, db)
                 results.append({
                     "url": entry.url,
                     "success": entry.success,
@@ -502,27 +502,33 @@ def get_random_memory(user: User = Depends(get_current_user), db: Session = Depe
 # ── Helpers ───────────────────────────────────────────────────
 
 
-def _serialize_memory(memory: Memory) -> dict:
+def _safe_json_loads(value, default):
     import json
+    if not value:
+        return default
+    try:
+        return json.loads(value)
+    except Exception:
+        return default
+
+def _serialize_memory(memory: Memory) -> dict:
     return {
         "id": memory.id,
-        "title": memory.title,
-        "summary": memory.summary,
-        "content": getattr(memory, 'content', getattr(memory, 'cleaned_text', '')),
-        "category": memory.category,
-        "bucket": getattr(memory, 'bucket', None),
-        "tags": json.loads(memory.tags) if memory.tags else [],
-        "importance_score": memory.importance_score,
-        "importance_reasons": (
-            json.loads(memory.importance_reasons) if memory.importance_reasons else []
-        ),
-        "platform": getattr(memory, 'platform', None),
-        "source_url": getattr(memory, 'source_url', getattr(memory, 'url', None)),
-        "thumbnail_url": getattr(memory, 'thumbnail_url', None),
-        "user_id": memory.user_id,
-        "created_at": (memory.created_at.isoformat() + "Z") if memory.created_at else "",
-        "content_quality": getattr(memory, 'content_quality', None),
-        "cognitive_mode": getattr(memory, 'cognitive_mode', None),
+        "title": getattr(memory, "title", None),
+        "summary": getattr(memory, "summary", None),
+        "content": getattr(memory, "content", getattr(memory, "cleaned_text", "")) or "",
+        "category": getattr(memory, "category", None),
+        "bucket": getattr(memory, "bucket", None),
+        "tags": _safe_json_loads(getattr(memory, "tags", None), []),
+        "importance_score": getattr(memory, "importance_score", None),
+        "importance_reasons": _safe_json_loads(getattr(memory, "importance_reasons", None), []),
+        "platform": getattr(memory, "platform", None),
+        "source_url": getattr(memory, "source_url", getattr(memory, "url", None)),
+        "thumbnail_url": getattr(memory, "thumbnail_url", None),
+        "user_id": getattr(memory, "user_id", None),
+        "created_at": (memory.created_at.isoformat() + "Z") if getattr(memory, "created_at", None) else "",
+        "content_quality": getattr(memory, "content_quality", None),
+        "cognitive_mode": getattr(memory, "cognitive_mode", None),
     }
 
 def _get_user_buckets(user_id, db: Session) -> list:
@@ -541,7 +547,7 @@ def _get_user_buckets(user_id, db: Session) -> list:
         return []
 
 
-def _save_cognitive_entry(entry, user_phone: str, db: Session) -> Memory:
+def _save_cognitive_entry(entry, user_id, db: Session) -> Memory:
     """Save a CognitiveEntry to the database as a Memory record."""
     memory = Memory(
         url=entry.url,
@@ -552,7 +558,7 @@ def _save_cognitive_entry(entry, user_phone: str, db: Session) -> Memory:
         category=entry.bucket or "Uncategorized",
         tags=json.dumps(entry.tags or []),
         thumbnail_url=entry.thumbnail_url or "",
-        user_phone=user_phone,
+        user_id=user_id,
         # Transcription fields
         transcript=entry.transcript or "",
         transcript_length=len(entry.transcript) if entry.transcript else 0,

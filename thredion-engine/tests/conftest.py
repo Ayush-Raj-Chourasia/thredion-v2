@@ -97,7 +97,7 @@ def make_memory(
     importance_score: float = 50.0,
     importance_reasons: list | None = None,
     thumbnail_url: str = "",
-    user_phone: str = "test",
+    user_id: str = "test",
     created_at: datetime | None = None,
     embedding_text: str | None = None,
 ) -> Memory:
@@ -115,7 +115,7 @@ def make_memory(
         importance_score=importance_score,
         importance_reasons=json.dumps(importance_reasons or ["testing"]),
         thumbnail_url=thumbnail_url,
-        user_phone=user_phone,
+        user_id=user_id,
         created_at=created_at or datetime.now(timezone.utc),
     )
     db_session.add(m)

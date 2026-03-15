@@ -98,7 +98,7 @@ class JobDeduplicator:
     Check before processing to avoid duplicate work.
     
     In production, this would query the database:
-    - Memory table for (user_phone, canonical_url, job_status)
+    - Memory table for (user_id, canonical_url, job_status)
     - CostLog table for billing history
     """
     
@@ -109,7 +109,7 @@ class JobDeduplicator:
     def should_process_url(
         self,
         url: str,
-        user_phone: str,
+        user_id: str,
         platform: str,
     ) -> DeduplicationResult:
         """
@@ -128,18 +128,18 @@ class JobDeduplicator:
         # Step 1: Normalize URL
         canonical_url = normalize_url(url, platform)
         
-        logger.info(f"Dedup check: {platform} / {user_phone} / {canonical_url}")
+        logger.info(f"Dedup check: {platform} / {user_id} / {canonical_url}")
         
         # Step 2: Check if already completed
         # In real code: 
         # memory = db.query(Memory).filter(
-        #     Memory.user_phone == user_phone,
+        #     Memory.user_id == user_id,
         #     Memory.canonical_url == canonical_url,
         #     Memory.job_status == "completed"
         # ).first()
         
         # Placeholder for now - would query database
-        existing_completed = None  # self._query_completed(user_phone, canonical_url)
+        existing_completed = None  # self._query_completed(user_id, canonical_url)
         
         if existing_completed:
             return DeduplicationResult(
@@ -153,12 +153,12 @@ class JobDeduplicator:
         # Step 3: Check if currently processing
         # In real code:
         # processing = db.query(Memory).filter(
-        #     Memory.user_phone == user_phone,
+        #     Memory.user_id == user_id,
         #     Memory.canonical_url == canonical_url,
         #     Memory.job_status.in_(["queued", "extracting", "transcribing", "classifying"])
         # ).first()
         
-        existing_processing = None  # self._query_processing(user_phone, canonical_url)
+        existing_processing = None  # self._query_processing(user_id, canonical_url)
         
         if existing_processing:
             return DeduplicationResult(
@@ -171,13 +171,13 @@ class JobDeduplicator:
         # Step 4: Check for recent permanent failures
         # In real code:
         # recent_failure = db.query(Memory).filter(
-        #     Memory.user_phone == user_phone,
+        #     Memory.user_id == user_id,
         #     Memory.canonical_url == canonical_url,
         #     Memory.failure_class == "permanent",
         #     Memory.last_failure_at > datetime.utcnow() - timedelta(hours=24)
         # ).first()
         
-        recent_failure = None  # self._query_recent_failure(user_phone, canonical_url)
+        recent_failure = None  # self._query_recent_failure(user_id, canonical_url)
         
         if recent_failure:
             return DeduplicationResult(
@@ -186,7 +186,7 @@ class JobDeduplicator:
             )
         
         # Step 5: OK to process
-        logger.info(f"✅ {user_phone} / {canonical_url}: Safe to process")
+        logger.info(f"✅ {user_id} / {canonical_url}: Safe to process")
         
         return DeduplicationResult(
             action="process_new",
@@ -196,7 +196,7 @@ class JobDeduplicator:
     def check_bulk_urls(
         self,
         urls: list[str],
-        user_phone: str,
+        user_id: str,
         platform: str,
     ) -> Dict[str, DeduplicationResult]:
         """
@@ -206,18 +206,18 @@ class JobDeduplicator:
         """
         results = {}
         for url in urls:
-            results[url] = self.should_process_url(url, user_phone, platform)
+            results[url] = self.should_process_url(url, user_id, platform)
         return results
     
     # ── Placeholder database query methods ────────────────────────────
     
-    def _query_completed(self, user_phone: str, canonical_url: str) -> Optional[Dict]:
+    def _query_completed(self, user_id: str, canonical_url: str) -> Optional[Dict]:
         """Query for completed job."""
         if not self.db:
             return None
         try:
             memory = self.db.query(Memory).filter(
-                Memory.user_phone == user_phone,
+                Memory.user_id == user_id,
                 Memory.canonical_url == canonical_url,
                 Memory.job_status == "completed"
             ).first()
@@ -231,13 +231,13 @@ class JobDeduplicator:
             logger.debug(f"Dedup completed query error: {e}")
         return None
     
-    def _query_processing(self, user_phone: str, canonical_url: str) -> Optional[Dict]:
+    def _query_processing(self, user_id: str, canonical_url: str) -> Optional[Dict]:
         """Query for job in progress."""
         if not self.db:
             return None
         try:
             memory = self.db.query(Memory).filter(
-                Memory.user_phone == user_phone,
+                Memory.user_id == user_id,
                 Memory.canonical_url == canonical_url,
                 Memory.job_status.in_(["queued", "extracting", "transcribing", "classifying"])
             ).first()
@@ -250,14 +250,14 @@ class JobDeduplicator:
             logger.debug(f"Dedup processing query error: {e}")
         return None
     
-    def _query_recent_failure(self, user_phone: str, canonical_url: str) -> Optional[Dict]:
+    def _query_recent_failure(self, user_id: str, canonical_url: str) -> Optional[Dict]:
         """Query for recent permanent failure."""
         if not self.db:
             return None
         try:
             cutoff = datetime.utcnow() - timedelta(hours=24)
             memory = self.db.query(Memory).filter(
-                Memory.user_phone == user_phone,
+                Memory.user_id == user_id,
                 Memory.canonical_url == canonical_url,
                 Memory.failure_class == "permanent",
                 Memory.last_failure_at > cutoff

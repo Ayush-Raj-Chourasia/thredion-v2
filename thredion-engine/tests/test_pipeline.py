@@ -155,4 +155,4 @@ class TestFullPipeline:
         assert db_session.query(Memory).count() == 1
         saved = db_session.query(Memory).first()
         assert saved.platform == "instagram"
-        assert saved.user_phone == "user1"
+        assert saved.user_id == "user1"

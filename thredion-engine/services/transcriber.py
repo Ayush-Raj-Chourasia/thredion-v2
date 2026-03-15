@@ -298,7 +298,7 @@ async def transcribe_url_full(url: str) -> TranscriptionResult:
 
 async def queue_long_video_job(
     url: str,
-    user_phone: str,
+    user_id: str,
     db_session,
 ) -> str:
     """
@@ -327,7 +327,7 @@ async def queue_long_video_job(
         message_data = {
             'job_id': job_id,
             'url': url,
-            'user_phone': user_phone,
+            'user_id': user_id,
             'type': 'video_transcription',
             'timestamp': datetime.utcnow().isoformat(),
         }
@@ -345,7 +345,7 @@ async def queue_long_video_job(
 
 async def process_video(
     url: str,
-    user_phone: str,
+    user_id: str,
     db_session,
 ) -> Dict[str, Any]:
     """
@@ -393,7 +393,7 @@ async def process_video(
         logger.info(f"[ROUTER] LONG video ({duration}s): queueing for async")
         
         try:
-            job_id = await queue_long_video_job(url, user_phone, db_session)
+            job_id = await queue_long_video_job(url, user_id, db_session)
             
             return {
                 'status': 'processing',

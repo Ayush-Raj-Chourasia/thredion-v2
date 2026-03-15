@@ -121,7 +121,7 @@ class TestLongVideoE2E:
                 mock_memory = Mock()
                 mock_memory.transcription_job_id = job_id
                 mock_memory.transcription_status = 'processing'
-                mock_memory.user_phone = "1234567890"
+                mock_memory.user_id = "1234567890"
                 
                 mock_db = Mock()
                 mock_db.query.return_value.filter.return_value.first.return_value = mock_memory

@@ -140,7 +140,7 @@ class TestDatabaseQueryPerformance:
         """Test that job_id lookup is fast <100ms."""
         # Create test data
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
             transcription_job_id="job-perf-001",
@@ -167,7 +167,7 @@ class TestDatabaseQueryPerformance:
         # Create multiple records
         for i in range(10):
             memory = Memory(
-                user_phone="1234567890",
+                user_id="1234567890",
                 source="phone",
                 raw_text=f"Test {i}",
                 transcription_status='processing' if i % 2 == 0 else 'completed',
@@ -253,7 +253,7 @@ class TestMemoryUsage:
         large_transcript = "word " * 20000  # ~100KB
         
         memory = Memory(
-            user_phone="1234567890",
+            user_id="1234567890",
             source="phone",
             raw_text="Test",
             transcript=large_transcript,

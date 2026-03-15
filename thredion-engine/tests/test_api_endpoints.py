@@ -67,7 +67,7 @@ class TestJobStatusEndpoint:
         mock_memory.id = 1
         mock_memory.transcription_job_id = "job-123"
         mock_memory.transcription_status = "processing"
-        mock_memory.user_phone = "1234567890"
+        mock_memory.user_id = "1234567890"
         mock_memory.transcript = None
         mock_memory.summary = None
         mock_memory.cognitive_mode = None
@@ -100,7 +100,7 @@ class TestJobStatusEndpoint:
         mock_memory.id = 1
         mock_memory.transcription_job_id = "job-123"
         mock_memory.transcription_status = "completed"
-        mock_memory.user_phone = "1234567890"
+        mock_memory.user_id = "1234567890"
         mock_memory.transcript = "Full transcript"
         mock_memory.summary = "Test summary"
         mock_memory.cognitive_mode = "learn"
