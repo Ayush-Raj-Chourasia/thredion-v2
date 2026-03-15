@@ -507,7 +507,7 @@ def _serialize_memory(memory: Memory) -> dict:
     return {
         "id": memory.id,
         "url": memory.url,
-        "platform": memory.platform,
+        "platform": getattr(memory, "platform", None),
         "title": memory.title,
         "content": memory.content[:500] if memory.content else "",
         "summary": memory.summary,

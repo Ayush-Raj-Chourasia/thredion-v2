@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from core.config import settings
-from db.models import Memory, ResurfacedMemory
+from db.models import Memory, ResurfacedMemory, User
 from services.embeddings import embedding_to_vector, cosine_similarity
 
 logger = logging.getLogger(__name__)
