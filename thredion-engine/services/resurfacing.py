@@ -132,12 +132,12 @@ def _build_reason(new_memory: Memory, old_memory: Memory, similarity: float) -> 
     return " · ".join(reasons)
 
 
-def get_recent_resurfaced(db: Session, limit: int = 20, user_phone: str = "") -> list[dict]:
+def get_recent_resurfaced(db: Session, limit: int = 20, user_id=None) -> list[dict]:
     """Get recently resurfaced memories for the dashboard, scoped to a user."""
     q = db.query(ResurfacedMemory)
-    if user_phone:
+    if user_id:
         # Only resurfaced entries whose memory belongs to this user
-        user = db.query(User).filter(User.phone_number == user_phone).first()
+        user = db.query(User).filter(User.id == user_id).first()
         if user:
             q = q.filter(ResurfacedMemory.user_id == user.id)
     records = (

@@ -113,7 +113,7 @@ def list_memories(
     db: Session = Depends(get_db),
 ):
     """List all memories for the authenticated user."""
-    query = db.query(Memory).filter(Memory.user_phone == user.phone)
+    query = db.query(Memory).filter(Memory.user_id == user.id)
 
     if search:
         term = f"%{search}%"
@@ -143,7 +143,7 @@ def list_memories(
 @router.get("/memories/{memory_id}")
 def get_memory(memory_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get a single memory with its connections (owned by current user)."""
-    memory = db.query(Memory).filter(Memory.id == memory_id, Memory.user_phone == user.phone).first()
+    memory = db.query(Memory).filter(Memory.id == memory_id, Memory.user_id == user.id).first()
     if not memory:
         raise HTTPException(status_code=404, detail="Memory not found")
 
@@ -174,7 +174,7 @@ def create_memory(
 @router.delete("/memories/{memory_id}")
 def delete_memory(memory_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Delete a memory owned by the current user."""
-    memory = db.query(Memory).filter(Memory.id == memory_id, Memory.user_phone == user.phone).first()
+    memory = db.query(Memory).filter(Memory.id == memory_id, Memory.user_id == user.id).first()
     if not memory:
         raise HTTPException(status_code=404, detail="Memory not found")
     # Delete related connections (both directions)
@@ -272,7 +272,7 @@ async def process_cognitive_endpoint(
     
     try:
         # Get user's existing buckets for better LLM bucketing
-        existing_buckets = _get_user_buckets(user.phone, db)
+        existing_buckets = _get_user_buckets(user.id, db)
         
         entry = await process_cognitive_entry(url, user.phone, db, existing_buckets)
         
@@ -325,7 +325,7 @@ async def process_batch_endpoint(
         raise HTTPException(status_code=400, detail="Maximum 20 URLs per batch")
     
     try:
-        existing_buckets = _get_user_buckets(user.phone, db)
+        existing_buckets = _get_user_buckets(user.id, db)
         
         entries = await process_batch(urls, user.phone, db, existing_buckets)
         
@@ -383,7 +383,7 @@ def get_job_status(
     """Check status of an async transcription job."""
     memory = db.query(Memory).filter(
         Memory.transcription_job_id == job_id,
-        Memory.user_phone == user.phone
+        Memory.user_id == user.id
     ).first()
     
     if not memory:
@@ -411,7 +411,7 @@ def get_job_status(
 @router.get("/graph")
 def get_knowledge_graph(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get the knowledge graph scoped to the authenticated user."""
-    return get_full_graph(db, user_phone=user.phone)
+    return get_full_graph(db, user_id=user.id)
 
 
 # ── Resurfaced Insights ──────────────────────────────────────
@@ -424,7 +424,7 @@ def get_resurfaced(
     db: Session = Depends(get_db),
 ):
     """Get recently resurfaced memories for the authenticated user."""
-    return get_recent_resurfaced(db, limit, user_phone=user.phone)
+    return get_recent_resurfaced(db, limit, user_id=user.id)
 
 
 # ── Statistics ────────────────────────────────────────────────
@@ -433,10 +433,10 @@ def get_resurfaced(
 @router.get("/stats")
 def get_stats(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get dashboard statistics for the authenticated user."""
-    total_memories = db.query(func.count(Memory.id)).filter(Memory.user_phone == user.phone).scalar() or 0
+    total_memories = db.query(func.count(Memory.id)).filter(Memory.user_id == user.id).scalar() or 0
 
     # Get connection IDs for this user's memories
-    user_mem_ids = db.query(Memory.id).filter(Memory.user_phone == user.phone).subquery()
+    user_mem_ids = db.query(Memory.id).filter(Memory.user_id == user.id).subquery()
     total_connections = db.query(func.count(Connection.id)).filter(
         Connection.source_id.in_(user_mem_ids) | Connection.target_id.in_(user_mem_ids)
     ).scalar() or 0
@@ -447,7 +447,7 @@ def get_stats(user: User = Depends(get_current_user), db: Session = Depends(get_
     # Category distribution
     categories_raw = (
         db.query(Memory.category, func.count(Memory.id))
-        .filter(Memory.user_phone == user.phone)
+        .filter(Memory.user_id == user.id)
         .group_by(Memory.category)
         .all()
     )
@@ -455,7 +455,7 @@ def get_stats(user: User = Depends(get_current_user), db: Session = Depends(get_
 
     avg_importance = (
         db.query(func.avg(Memory.importance_score))
-        .filter(Memory.user_phone == user.phone)
+        .filter(Memory.user_id == user.id)
         .scalar() or 0.0
     )
 
@@ -479,7 +479,7 @@ def get_categories(user: User = Depends(get_current_user), db: Session = Depends
     """Get all categories with counts for the authenticated user."""
     results = (
         db.query(Memory.category, func.count(Memory.id))
-        .filter(Memory.user_phone == user.phone)
+        .filter(Memory.user_id == user.id)
         .group_by(Memory.category)
         .order_by(func.count(Memory.id).desc())
         .all()
@@ -493,7 +493,7 @@ def get_categories(user: User = Depends(get_current_user), db: Session = Depends
 @router.get("/random")
 def get_random_memory(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get a random memory for the authenticated user."""
-    memory = db.query(Memory).filter(Memory.user_phone == user.phone).order_by(func.random()).first()
+    memory = db.query(Memory).filter(Memory.user_id == user.id).order_by(func.random()).first()
     if not memory:
         raise HTTPException(status_code=404, detail="No memories yet")
     return _serialize_memory(memory)
@@ -519,7 +519,7 @@ def _serialize_memory(memory: Memory) -> dict:
             json.loads(memory.importance_reasons) if memory.importance_reasons else []
         ),
         "thumbnail_url": memory.thumbnail_url,
-        "user_phone": memory.user_phone,
+        "user_id": memory.user_id,
         "created_at": (memory.created_at.isoformat() + "Z") if memory.created_at else "",
         "content_quality": getattr(memory, 'content_quality', None),
         "cognitive_mode": getattr(memory, 'cognitive_mode', None),
@@ -527,12 +527,12 @@ def _serialize_memory(memory: Memory) -> dict:
     }
 
 
-def _get_user_buckets(user_phone: str, db: Session) -> list:
+def _get_user_buckets(user_id, db: Session) -> list:
     """Get list of distinct bucket names for a user."""
     try:
         results = (
             db.query(Memory.bucket)
-            .filter(Memory.user_phone == user_phone)
+            .filter(Memory.user_id == user_id)
             .filter(Memory.bucket.isnot(None))
             .filter(Memory.bucket != "Uncategorized")
             .distinct()

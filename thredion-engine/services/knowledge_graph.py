@@ -91,14 +91,14 @@ def build_connections(new_memory: Memory, db: Session) -> list[dict]:
     return connections_created
 
 
-def get_full_graph(db: Session, user_phone: str = "") -> dict:
+def get_full_graph(db: Session, user_id = None) -> dict:
     """
     Build the knowledge graph for the dashboard, scoped to a user.
     Returns nodes and edges.
     """
     q = db.query(Memory)
-    if user_phone:
-        q = q.filter(Memory.user_phone == user_phone)
+    if user_id:
+        q = q.filter(Memory.user_id == user_id)
     memories = q.all()
     mem_ids = {m.id for m in memories}
     connections = [
