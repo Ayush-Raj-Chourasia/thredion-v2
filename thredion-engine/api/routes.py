@@ -503,29 +503,27 @@ def get_random_memory(user: User = Depends(get_current_user), db: Session = Depe
 
 
 def _serialize_memory(memory: Memory) -> dict:
-    """Convert a Memory ORM object to a JSON-serializable dict."""
+    import json
     return {
         "id": memory.id,
-        "url": memory.url,
-        "platform": getattr(memory, "platform", None),
         "title": memory.title,
-        "content": memory.content[:500] if memory.content else "",
         "summary": memory.summary,
+        "content": getattr(memory, 'content', getattr(memory, 'cleaned_text', '')),
         "category": memory.category,
+        "bucket": getattr(memory, 'bucket', None),
         "tags": json.loads(memory.tags) if memory.tags else [],
-        "topic_graph": json.loads(memory.topic_graph) if memory.topic_graph else [],
         "importance_score": memory.importance_score,
         "importance_reasons": (
             json.loads(memory.importance_reasons) if memory.importance_reasons else []
         ),
-        "thumbnail_url": memory.thumbnail_url,
+        "platform": getattr(memory, 'platform', None),
+        "source_url": getattr(memory, 'source_url', getattr(memory, 'url', None)),
+        "thumbnail_url": getattr(memory, 'thumbnail_url', None),
         "user_id": memory.user_id,
         "created_at": (memory.created_at.isoformat() + "Z") if memory.created_at else "",
         "content_quality": getattr(memory, 'content_quality', None),
         "cognitive_mode": getattr(memory, 'cognitive_mode', None),
-        "bucket": getattr(memory, 'bucket', None),
     }
-
 
 def _get_user_buckets(user_id, db: Session) -> list:
     """Get list of distinct bucket names for a user."""
