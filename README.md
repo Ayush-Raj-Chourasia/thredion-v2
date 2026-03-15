@@ -10,7 +10,7 @@ Thredion is not just a link saver — it's a **cognitive layer** that understand
 
 | | Link |
 |---|---|
-| **Dashboard** | [thredion.vercel.app](https://thredion.vercel.app) |
+| **Dashboard** | [thredion-v2.vercel.app](https://thredion-v2.vercel.app) |
 | **API** | [thredion-api.azurewebsites.net](https://thredion-api.azurewebsites.net) |
 | **WhatsApp Bot** | [**Chat on WhatsApp →**](https://wa.me/14155238886?text=join%20deep-third) |
 
@@ -19,7 +19,7 @@ Thredion is not just a link saver — it's a **cognitive layer** that understand
 > 2. It opens WhatsApp with the Twilio Sandbox number **+1 (415) 523-8886**
 > 3. Send **`join deep-third`** to activate the sandbox
 > 4. Once connected, just **paste any link** (Instagram reel, YouTube video, article, tweet) and the bot will process it through the full cognitive pipeline
-> 5. Open the [Dashboard](https://thredion.vercel.app) to see your memories, knowledge graph, and analytics
+> 5. Open the [Dashboard](https://thredion-v2.vercel.app) to see your memories, knowledge graph, and analytics
 
 ---
 
@@ -412,7 +412,7 @@ python -m pytest tests/ -v
 | Component | Platform | URL |
 |-----------|----------|-----|
 | **Backend API** | Azure App Service (Free F1) | [thredion-api.azurewebsites.net](https://thredion-api.azurewebsites.net) |
-| **Dashboard** | Vercel | [thredion.vercel.app](https://thredion.vercel.app) |
+| **Dashboard** | Vercel | [thredion-v2.vercel.app](https://thredion-v2.vercel.app) |
 | **WhatsApp Bot** | Twilio Sandbox | [Chat on WhatsApp →](https://wa.me/14155238886?text=join%20deep-third) |
 | **API Docs** | Swagger UI | [thredion-api.azurewebsites.net/docs](https://thredion-api.azurewebsites.net/docs) |
 
