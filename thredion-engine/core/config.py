@@ -68,6 +68,7 @@ class Settings:
     # ── External Extractors (Premium Fallbacks) ───────────────
     SUPADATA_API_KEY: str = os.getenv("SUPADATA_API_KEY", "")
     SOCIALKIT_API_KEY: str = os.getenv("SOCIALKIT_API_KEY", "")
+    TRANSCRIPT24_API_KEY: str = os.getenv("TRANSCRIPT24_API_KEY", "")
 
     # ── Authentication ────────────────────────────────────────
     JWT_SECRET: str = os.getenv("JWT_SECRET", "thredion-secret-change-in-prod")

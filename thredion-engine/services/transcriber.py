@@ -11,11 +11,13 @@ import os
 import json
 import uuid
 import tempfile
+import re
 from datetime import datetime
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
 import yt_dlp
+import requests
 try:
     from faster_whisper import WhisperModel  # type: ignore
 except Exception:  # pragma: no cover
@@ -25,6 +27,15 @@ whisper = WhisperModel
 from core.config import settings
 
 logger = logging.getLogger(__name__)
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+}
 
 # ── Global Whisper Model Cache ─────────────────────────────
 _whisper_model: Optional[Any] = None
@@ -166,46 +177,70 @@ async def download_audio(url: str) -> Optional[str]:
     
     def _download():
         ffmpeg_path = os.getenv('FFMPEG_PATH', 'ffmpeg')
-        
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
-                'preferredquality': '192',
-            }],
-            'ffmpeg_location': ffmpeg_path,
-            'quiet': True,
-            'no_warnings': True,
-            'outtmpl': output_template,
-            'socket_timeout': 30,
-        }
-        
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                # yt-dlp renames the file after post-processing
-                base = output_template.replace('.%(ext)s', '')
-                # Try .wav first, then other extensions
-                for ext in ['wav', 'mp3', 'ogg', 'opus', 'webm', 'm4a']:
-                    candidate = f"{base}.{ext}"
-                    if os.path.exists(candidate):
-                        logger.info(f"Audio downloaded: {candidate}")
-                        return candidate
-                
-                # Fallback: check what yt-dlp actually created
-                prepared = ydl.prepare_filename(info)
-                wav_path = os.path.splitext(prepared)[0] + '.wav'
-                if os.path.exists(wav_path):
-                    return wav_path
-                if os.path.exists(prepared):
-                    return prepared
-                    
-                logger.warning(f"Audio file not found after download")
-                return None
-        except Exception as e:
-            logger.warning(f"Audio download failed for {url}: {e}")
-            return None
+
+        attempt_options = [
+            {
+                'format': 'bestaudio/best',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'wav',
+                    'preferredquality': '192',
+                }],
+                'ffmpeg_location': ffmpeg_path,
+                'quiet': True,
+                'no_warnings': True,
+                'outtmpl': output_template,
+                'socket_timeout': 30,
+                'retries': 3,
+                'fragment_retries': 3,
+                'noplaylist': True,
+                'http_headers': HEADERS,
+            },
+            {
+                # Fallback profile for fragile social platforms
+                'format': 'bestaudio[ext=m4a]/bestaudio/best',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'wav',
+                    'preferredquality': '192',
+                }],
+                'ffmpeg_location': ffmpeg_path,
+                'quiet': True,
+                'no_warnings': True,
+                'outtmpl': output_template,
+                'socket_timeout': 45,
+                'retries': 5,
+                'fragment_retries': 5,
+                'noplaylist': True,
+                'http_headers': HEADERS,
+            },
+        ]
+
+        for idx, ydl_opts in enumerate(attempt_options, start=1):
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(url, download=True)
+
+                    base = output_template.replace('.%(ext)s', '')
+                    for ext in ['wav', 'mp3', 'ogg', 'opus', 'webm', 'm4a']:
+                        candidate = f"{base}.{ext}"
+                        if os.path.exists(candidate):
+                            logger.info(f"Audio downloaded (attempt {idx}): {candidate}")
+                            return candidate
+
+                    prepared = ydl.prepare_filename(info)
+                    wav_path = os.path.splitext(prepared)[0] + '.wav'
+                    if os.path.exists(wav_path):
+                        logger.info(f"Audio downloaded (attempt {idx}): {wav_path}")
+                        return wav_path
+                    if os.path.exists(prepared):
+                        logger.info(f"Audio downloaded (attempt {idx}): {prepared}")
+                        return prepared
+            except Exception as e:
+                logger.warning(f"Audio download attempt {idx} failed for {url}: {e}")
+
+        logger.warning(f"Audio file not found after all download attempts for {url}")
+        return None
     
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _download)
@@ -370,6 +405,76 @@ async def process_video(
     duration = metadata.get('duration_seconds', 600)
     
     logger.info(f"[ROUTER] Duration: {duration}s ({duration//60}m)")
+
+    async def _paid_youtube_fallback() -> Optional[Dict[str, Any]]:
+        """Try paid transcript providers for YouTube when local transcription fails."""
+        platform = detect_platform(url)
+        if platform != "youtube":
+            return None
+
+        video_id = None
+        patterns = [
+            r"(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)([a-zA-Z0-9_-]{11})",
+            r"youtube\.com/embed/([a-zA-Z0-9_-]{11})",
+        ]
+        for p in patterns:
+            m = re.search(p, url)
+            if m:
+                video_id = m.group(1)
+                break
+        if not video_id:
+            return None
+
+        # Supadata
+        if settings.SUPADATA_API_KEY:
+            try:
+                supa_url = f"https://api.supadata.ai/v1/youtube/transcript?videoId={video_id}&text=true"
+                resp = requests.get(supa_url, headers={"x-api-key": settings.SUPADATA_API_KEY}, timeout=20)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    content = data.get("content", "")
+                    if content and len(content.strip()) > 40:
+                        return {
+                            'status': 'completed',
+                            'job_id': None,
+                            'transcript': content,
+                            'transcript_length': len(content),
+                            'transcript_source': 'supadata_api',
+                            'duration': duration,
+                            'metadata': metadata,
+                            'message': '✅ Transcription complete via Supadata!',
+                        }
+            except Exception as e:
+                logger.warning(f"[ROUTER] Supadata paid fallback failed: {e}")
+
+        # Transcript24
+        t24_key = getattr(settings, "TRANSCRIPT24_API_KEY", "")
+        if t24_key:
+            try:
+                resp = requests.post(
+                    "https://api.transcript24.com/v1/transcribe",
+                    headers={"Authorization": f"Bearer {t24_key}"},
+                    json={"url": url},
+                    timeout=30,
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    content = data.get("transcript", "")
+                    if content and len(content.strip()) > 40:
+                        return {
+                            'status': 'completed',
+                            'job_id': None,
+                            'transcript': content,
+                            'transcript_length': len(content),
+                            'transcript_source': 'transcript24_api',
+                            'duration': duration,
+                            'metadata': metadata,
+                            'message': '✅ Transcription complete via Transcript24!',
+                        }
+            except Exception as e:
+                logger.warning(f"[ROUTER] Transcript24 paid fallback failed: {e}")
+
+        return None
     
     # Step 2: Route based on duration
     if duration <= settings.SHORT_VIDEO_MAX_DURATION:
@@ -391,6 +496,11 @@ async def process_video(
             }
         except Exception as e:
             logger.error(f"[ROUTER] Local transcription failed: {e}")
+
+            paid = await _paid_youtube_fallback()
+            if paid:
+                return paid
+
             return {
                 'status': 'failed',
                 'error': str(e),

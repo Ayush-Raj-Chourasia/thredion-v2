@@ -528,10 +528,33 @@ def _safe_json_loads(value, default):
     except Exception:
         return default
 
+
+def _fallback_thumbnail(platform: str, url: str) -> str:
+    """Build a best-effort thumbnail URL when DB thumbnail is empty."""
+    if not url:
+        return ""
+
+    platform = (platform or "").lower()
+    if platform == "youtube":
+        import re
+        patterns = [
+            r"(?:youtube\.com/watch\?v=|youtu\.be/|youtube\.com/shorts/)([a-zA-Z0-9_-]{11})",
+            r"youtube\.com/embed/([a-zA-Z0-9_-]{11})",
+        ]
+        for p in patterns:
+            m = re.search(p, url)
+            if m:
+                return f"https://img.youtube.com/vi/{m.group(1)}/hqdefault.jpg"
+    return ""
+
 def _serialize_memory(memory: Memory) -> dict:
+    url = getattr(memory, "source_url", getattr(memory, "url", None))
+    platform = getattr(memory, "platform", None)
+    thumbnail_url = getattr(memory, "thumbnail_url", None) or _fallback_thumbnail(platform, url)
+
     return {
         "id": memory.id,
-        "url": getattr(memory, "source_url", getattr(memory, "url", None)),
+        "url": url,
         "title": getattr(memory, "title", None),
         "summary": getattr(memory, "summary", None),
         "content": getattr(memory, "content", getattr(memory, "cleaned_text", "")) or "",
@@ -541,9 +564,9 @@ def _serialize_memory(memory: Memory) -> dict:
         "topic_graph": _safe_json_loads(getattr(memory, "topic_graph", None), []),
         "importance_score": getattr(memory, "importance_score", None),
         "importance_reasons": _safe_json_loads(getattr(memory, "importance_reasons", None), []),
-        "platform": getattr(memory, "platform", None),
-        "source_url": getattr(memory, "source_url", getattr(memory, "url", None)),
-        "thumbnail_url": getattr(memory, "thumbnail_url", None),
+        "platform": platform,
+        "source_url": url,
+        "thumbnail_url": thumbnail_url,
         "user_id": getattr(memory, "user_id", None),
         "created_at": (memory.created_at.isoformat() + "Z") if getattr(memory, "created_at", None) else "",
         "content_quality": getattr(memory, "content_quality", None),
