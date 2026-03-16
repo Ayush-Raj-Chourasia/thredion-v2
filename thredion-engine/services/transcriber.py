@@ -447,33 +447,6 @@ async def process_video(
             except Exception as e:
                 logger.warning(f"[ROUTER] Supadata paid fallback failed: {e}")
 
-        # Transcript24
-        t24_key = getattr(settings, "TRANSCRIPT24_API_KEY", "")
-        if t24_key:
-            try:
-                resp = requests.post(
-                    "https://api.transcript24.com/v1/transcribe",
-                    headers={"Authorization": f"Bearer {t24_key}"},
-                    json={"url": url},
-                    timeout=30,
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    content = data.get("transcript", "")
-                    if content and len(content.strip()) > 40:
-                        return {
-                            'status': 'completed',
-                            'job_id': None,
-                            'transcript': content,
-                            'transcript_length': len(content),
-                            'transcript_source': 'transcript24_api',
-                            'duration': duration,
-                            'metadata': metadata,
-                            'message': '✅ Transcription complete via Transcript24!',
-                        }
-            except Exception as e:
-                logger.warning(f"[ROUTER] Transcript24 paid fallback failed: {e}")
-
         return None
     
     # Step 2: Route based on duration
