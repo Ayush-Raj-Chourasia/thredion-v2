@@ -107,8 +107,26 @@ class Memory(Base):
     resurfaced_count = Column(Integer, default=0)
     last_resurfaced_at = Column(DateTime(timezone=True), nullable=True)
     
-    created_at = Column(DateTime(timezone=True), default=_utcnow)
-    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    # Video Transcription & Job fields
+    transcript = Column(Text, default="")
+    transcript_length = Column(Integer, default=0)
+    transcript_source = Column(String(20), default="pending")
+    video_duration = Column(Integer, default=0)
+    is_video = Column(Boolean, default=False)
+    
+    # Extra Cognitive fields
+    cognitive_mode = Column(String(20), default="learn")
+    title_generated = Column(String(512), default="")
+    bucket = Column(String(100), default="Uncategorized")
+    actionability_score = Column(Float, default=0.0)
+    emotional_tone = Column(String(50), default="")
+    confidence_score = Column(Float, default=0.0)
+
+    # Job tracking
+    transcription_job_id = Column(String(100), nullable=True, index=True)
+    transcription_status = Column(String(20), default="pending", index=True)
+    processing_error = Column(Text, nullable=True)
+    processed_at = Column(DateTime(timezone=True), nullable=True)
 
     # Aliases for compatibility
     @property
