@@ -129,6 +129,9 @@ class Memory(Base):
     transcription_status = Column(String(20), default="pending", index=True)
     processing_error = Column(Text, nullable=True)
     processed_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Thumbnail (persisted so it survives DB round-trips)
+    thumbnail_url = Column(String(2048), default="")
     connections_out = relationship(
         "Connection",
         foreign_keys="Connection.source_id",
@@ -183,13 +186,7 @@ class Memory(Base):
     def topic_graph(self, value):
         self._topic_graph = value
 
-    @property
-    def thumbnail_url(self):
-        return getattr(self, "_thumbnail_url", "")
-
-    @thumbnail_url.setter
-    def thumbnail_url(self, value):
-        self._thumbnail_url = value or ""
+    # thumbnail_url is now a real DB column (see above)
 
 
 class Connection(Base):

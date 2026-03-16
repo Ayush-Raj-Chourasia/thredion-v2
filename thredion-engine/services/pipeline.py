@@ -118,6 +118,7 @@ def process_url(url: str, user_id: str, db: Session) -> dict:
             tags=classification.tags, # models.py uses JSONB
             embedding=embedding_bytes,
             user_id=user_id,
+            thumbnail_url=extracted.thumbnail_url or "",
         )
         db.add(memory)
         db.commit()

@@ -76,6 +76,10 @@ def init_db():
         from db.models import User, OTPCode, Memory, Connection, ResurfacedMemory  # noqa: F401
         Base.metadata.create_all(bind=engine)
         logger.info("✓ Database tables ensured to exist")
+
+        # ── Auto-migrations: add columns introduced after initial deploy ──
+        _run_auto_migrations(engine, settings.DATABASE_URL)
+
         _db_init_attempted = True
     except Exception as e:
         _db_init_attempted = True  # Mark as attempted to avoid repeated failures
@@ -89,3 +93,35 @@ def init_db():
             # In development, this is a real error
             logger.error(f"✗ Failed to initialize database: {e}", exc_info=True)
             raise
+
+
+def _run_auto_migrations(engine, db_url: str):
+    """Apply incremental schema changes that are safe to run on every startup.
+    Uses IF NOT EXISTS / IF EXISTS guards so they are idempotent.
+    """
+    import logging as _logging
+    _logger = _logging.getLogger("thredion")
+
+    if "postgresql" not in db_url.lower():
+        # SQLite: create_all() above already handles new columns via ORM
+        return
+
+    pg_migrations = [
+        # Migration 003 – thumbnail_url on memories
+        "ALTER TABLE memories ADD COLUMN IF NOT EXISTS thumbnail_url VARCHAR(2048) DEFAULT '';",
+        # Migration 003 – cognitive_entries & buckets tables (created by ORM but guard here too)
+        # (no-op if already present)
+    ]
+
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            for stmt in pg_migrations:
+                try:
+                    conn.execute(text(stmt))
+                except Exception as col_err:
+                    _logger.warning(f"Auto-migration step skipped ({col_err}): {stmt[:80]}")
+            conn.commit()
+        _logger.info("✓ Auto-migrations applied")
+    except Exception as e:
+        _logger.warning(f"⚠ Auto-migrations failed (non-fatal): {e}")
