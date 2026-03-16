@@ -24,7 +24,7 @@ from sqlalchemy.pool import StaticPool
 
 import db.database as _db_module
 from db.database import Base, get_db
-from db.models import Memory, Connection, ResurfacedMemory
+from db.models import Memory, Connection, ResurfacedMemory, User
 
 # Shared test engine (in-memory, StaticPool ensures single connection so all
 # sessions see the same database — critical for in-memory SQLite)
@@ -33,7 +33,7 @@ _test_engine = create_engine(
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
-_TestSessionLocal = sessionmaker(bind=_test_engine)
+_TestSessionLocal = sessionmaker(bind=_test_engine, expire_on_commit=False)
 
 
 @pytest.fixture()
@@ -41,6 +41,9 @@ def db_session():
     """Provide a fresh in-memory DB with tables for each test."""
     Base.metadata.create_all(bind=_test_engine)
     session = _TestSessionLocal()
+    dummy_user = User(id="test", phone_number="1234567890", username="Test User")
+    session.add(dummy_user)
+    session.commit()
     try:
         yield session
     finally:
@@ -53,6 +56,7 @@ def db_session():
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 from main import app
+from api.auth import get_current_user
 
 
 @pytest.fixture()
@@ -65,6 +69,7 @@ def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_current_user] = lambda: db_session.query(User).first()
 
     # Patch init_db so the lifespan creates tables on the TEST engine
     with patch.object(_db_module, "init_db", lambda: Base.metadata.create_all(bind=_test_engine)):
@@ -103,21 +108,21 @@ def make_memory(
 ) -> Memory:
     """Insert and return a fully-formed Memory row."""
     m = Memory(
-        url=url,
-        platform=platform,
+        source_url=url,
+        source=platform,
         title=title,
-        content=content,
+        original_input=content,
         summary=summary,
         category=category,
         tags=json.dumps(tags or ["test"]),
-        topic_graph=json.dumps(topic_graph or [category]),
         embedding=make_embedding(embedding_text or title),
         importance_score=importance_score,
         importance_reasons=json.dumps(importance_reasons or ["testing"]),
-        thumbnail_url=thumbnail_url,
         user_id=user_id,
-        created_at=created_at or datetime.now(timezone.utc),
     )
+    m.topic_graph = json.dumps(topic_graph or [category])
+    m.thumbnail_url = thumbnail_url
+    m.created_at = created_at or datetime.now(timezone.utc)
     db_session.add(m)
     db_session.commit()
     db_session.refresh(m)

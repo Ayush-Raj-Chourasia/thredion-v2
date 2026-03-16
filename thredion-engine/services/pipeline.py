@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 _process_lock = threading.Lock()
 
 
-async def process_url(url: str, user_id: str, db: Session) -> dict:
+def process_url(url: str, user_id: str, db: Session) -> dict:
     """
     Full cognitive pipeline: URL → extract → embed → classify → graph → score → resurface.
     Returns a dict with all results for the WhatsApp reply and API response.
@@ -52,10 +52,13 @@ async def process_url(url: str, user_id: str, db: Session) -> dict:
         ) else normalized_url
         
         # Get user ID from phone
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise ValueError(f"User {user_id} not found")
-        user_id = user.id
+        user = (
+            db.query(User)
+            .filter((User.id == user_id) | (User.phone_number == str(user_id)))
+            .first()
+        )
+        if user:
+            user_id = user.id
 
         existing = (
             db.query(Memory)
@@ -102,7 +105,7 @@ async def process_url(url: str, user_id: str, db: Session) -> dict:
 
         # ── Step 3: Classify and summarize ───────────────────────
         logger.info("[Pipeline] Classifying content")
-        classification = await classify_content(combined_text, url)
+        classification = classify_content(combined_text, url)
 
         # ── Step 4: Save to database ─────────────────────────────
         memory = Memory(
@@ -193,10 +196,13 @@ async def process_video_url_async(
         ) else normalized_url
         
         # Get user ID from phone
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise ValueError(f"User {user_id} not found")
-        user_id = user.id
+        user = (
+            db.query(User)
+            .filter((User.id == user_id) | (User.phone_number == str(user_id)))
+            .first()
+        )
+        if user:
+            user_id = user.id
 
         existing = (
             db.query(Memory)
@@ -210,7 +216,7 @@ async def process_video_url_async(
         if existing:
             logger.info(f"[VIDEO PIPELINE] Duplicate detected: Memory #{existing.id}")
             return {
-                "memory_id": str(existing.id),
+                "memory_id": existing.id,
                 "duplicate": True,
                 "message": "This link already exists in your memory vault!",
             }

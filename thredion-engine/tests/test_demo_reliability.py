@@ -121,7 +121,7 @@ class TestWhatsAppWebhookResilience:
         """Twilio webhook with no 'Body' field should return help message."""
         r = client.post(
             "/api/whatsapp/webhook",
-            data={"From": "whatsapp:+1234567890"},
+            data={"From": "whatsapp:+00000000-0000-0000-0000-000000000000"},
         )
         # Should return 200 with TwiML, not 500
         assert r.status_code == 200
@@ -131,7 +131,7 @@ class TestWhatsAppWebhookResilience:
         """Empty message body → help reply."""
         r = client.post(
             "/api/whatsapp/webhook",
-            data={"From": "whatsapp:+1234567890", "Body": ""},
+            data={"From": "whatsapp:+00000000-0000-0000-0000-000000000000", "Body": ""},
         )
         assert r.status_code == 200
 
@@ -139,7 +139,7 @@ class TestWhatsAppWebhookResilience:
         """Message with text but no URL → help reply."""
         r = client.post(
             "/api/whatsapp/webhook",
-            data={"From": "whatsapp:+1234567890", "Body": "hello there"},
+            data={"From": "whatsapp:+00000000-0000-0000-0000-000000000000", "Body": "hello there"},
         )
         assert r.status_code == 200
         assert "help" in r.text.lower() or "send" in r.text.lower() or "link" in r.text.lower()

@@ -22,7 +22,7 @@ class TestProcessVideoEndpoint:
     @patch('api.routes.get_current_user')
     async def test_process_video_short_success(self, mock_auth, mock_process):
         """Test successful short video processing."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         mock_process.return_value = {
             'status': 'completed',
             'memory_id': 1,
@@ -43,7 +43,7 @@ class TestProcessVideoEndpoint:
     @patch('api.routes.get_current_user')
     def test_invalid_url_format(self, mock_auth):
         """Test rejection of invalid URL format."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         response = client.post(
             "/api/process-video?url=not-a-valid-url",
@@ -60,14 +60,14 @@ class TestJobStatusEndpoint:
     @patch('api.routes.get_db')
     def test_get_job_status_processing(self, mock_db_dep, mock_auth):
         """Test retrieving status of processing job."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         # Create mock memory
         mock_memory = Mock(spec=Memory)
         mock_memory.id = 1
         mock_memory.transcription_job_id = "job-123"
         mock_memory.transcription_status = "processing"
-        mock_memory.user_id = "1234567890"
+        mock_memory.user_id = "00000000-0000-0000-0000-000000000000"
         mock_memory.transcript = None
         mock_memory.summary = None
         mock_memory.cognitive_mode = None
@@ -94,13 +94,13 @@ class TestJobStatusEndpoint:
     @patch('api.routes.get_db')
     def test_get_job_status_completed(self, mock_db_dep, mock_auth):
         """Test retrieving status of completed job."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         mock_memory = Mock(spec=Memory)
         mock_memory.id = 1
         mock_memory.transcription_job_id = "job-123"
         mock_memory.transcription_status = "completed"
-        mock_memory.user_id = "1234567890"
+        mock_memory.user_id = "00000000-0000-0000-0000-000000000000"
         mock_memory.transcript = "Full transcript"
         mock_memory.summary = "Test summary"
         mock_memory.cognitive_mode = "learn"
@@ -128,7 +128,7 @@ class TestJobStatusEndpoint:
     @patch('api.routes.get_db')
     def test_get_job_not_found(self, mock_db_dep, mock_auth):
         """Test 404 when job not found."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         mock_db = Mock()
         mock_db.query.return_value.filter.return_value.first.return_value = None
@@ -163,7 +163,7 @@ class TestErrorResponses:
     @patch('api.routes.get_current_user')
     async def test_processing_error_returns_500(self, mock_auth, mock_process):
         """Test that processing errors return 500 status."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         mock_process.side_effect = Exception("Processing error")
         
         response = client.post(
@@ -182,7 +182,7 @@ class TestResponseFormats:
     @patch('api.routes.get_current_user')
     async def test_completed_response_format(self, mock_auth, mock_process):
         """Test format of completed transcription response."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         mock_process.return_value = {
             'status': 'completed',
             'memory_id': 1,
@@ -232,7 +232,7 @@ class TestSSEEventBroadcasting:
         mock_notify
     ):
         """Test that SSE notification is sent on memory creation."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         mock_process.return_value = {
             'status': 'completed',
             'memory_id': 1,

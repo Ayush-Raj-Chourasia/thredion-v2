@@ -55,6 +55,10 @@ async def whatsapp_webhook(
     
     logger.info(f"[WhatsApp] Message from {user_phone}: {body}")
 
+    # For short plain text without URL/media, keep legacy help response behavior.
+    if not voice_url and not URL_PATTERN.search(body or "") and len((body or "").split()) <= 3:
+        return _twiml_response(_build_help_reply())
+
     # Process via the new pipeline
     try:
         result = await process_incoming(

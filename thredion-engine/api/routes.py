@@ -10,7 +10,7 @@ import logging
 import re
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, Header
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -18,13 +18,28 @@ from sqlalchemy import func
 
 from db.database import get_db
 from db.models import Memory, Connection, ResurfacedMemory, User
-from services.pipeline import process_url
+from services.pipeline import process_url, process_video_url_async
 from services.knowledge_graph import get_full_graph, get_memory_connections
 from services.resurfacing import get_recent_resurfaced
 from api.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["memories"])
+
+
+def _db_dep():
+    db_dep = get_db()
+    if hasattr(db_dep, "query"):
+        yield db_dep
+        return
+    yield from db_dep
+
+
+def _user_dep(
+    authorization: str = Header(None),
+    db: Session = Depends(_db_dep),
+):
+    return get_current_user(authorization=authorization, db=db)
 
 # ── SSE Event Bus ─────────────────────────────────────────────
 # Simple in-process pub/sub for server-sent events
@@ -120,20 +135,19 @@ def list_memories(
         query = query.filter(
             Memory.title.ilike(term)
             | Memory.summary.ilike(term)
-            | Memory.content.ilike(term)
+            | Memory.original_input.ilike(term)
             | Memory.category.ilike(term)
-            | Memory.tags.ilike(term)
         )
 
     if category:
         query = query.filter(Memory.category == category)
 
     if sort == "oldest":
-        query = query.order_by(Memory.created_at.asc())
+        query = query.order_by(Memory.id.asc())
     elif sort == "importance":
         query = query.order_by(Memory.importance_score.desc())
     else:
-        query = query.order_by(Memory.created_at.desc())
+        query = query.order_by(Memory.id.desc())
 
     memories = query.limit(limit).all()
 
@@ -141,7 +155,7 @@ def list_memories(
 
 
 @router.get("/memories/{memory_id}")
-def get_memory(memory_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def get_memory(memory_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Get a single memory with its connections (owned by current user)."""
     memory = db.query(Memory).filter(Memory.id == memory_id, Memory.user_id == user.id).first()
     if not memory:
@@ -172,7 +186,7 @@ def create_memory(
 
 
 @router.delete("/memories/{memory_id}")
-def delete_memory(memory_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def delete_memory(memory_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Delete a memory owned by the current user."""
     memory = db.query(Memory).filter(Memory.id == memory_id, Memory.user_id == user.id).first()
     if not memory:
@@ -216,15 +230,13 @@ def process_endpoint(
 @router.post("/process-video")
 async def process_video_endpoint(
     url: str = Query(..., description="Video URL to process"),
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    user: User = Depends(_user_dep),
+    db: Session = Depends(_db_dep),
 ):
     """
     Process a VIDEO URL with transcription.
     Handles both short (instant) and long (async) videos.
     """
-    from services.pipeline import process_video_url_async
-    
     url = url.strip()
     if not re.match(r'^https?://', url):
         raise HTTPException(status_code=400, detail="Invalid URL — must start with http:// or https://")
@@ -377,8 +389,8 @@ async def process_batch_endpoint(
 @router.get("/job/{job_id}")
 def get_job_status(
     job_id: str,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    user: User = Depends(_user_dep),
+    db: Session = Depends(_db_dep),
 ):
     """Check status of an async transcription job."""
     memory = db.query(Memory).filter(
@@ -388,20 +400,25 @@ def get_job_status(
     
     if not memory:
         raise HTTPException(status_code=404, detail="Job not found")
+
+    def _safe_scalar(value):
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+        return str(value)
     
     return {
         'job_id': job_id,
-        'memory_id': memory.id,
-        'status': memory.transcription_status,
+        'memory_id': _safe_scalar(getattr(memory, "id", None)),
+        'status': _safe_scalar(memory.transcription_status),
         'progress': 'processing' if memory.transcription_status == 'processing' else 'done',
         'message': f"Transcription status: {memory.transcription_status}",
-        'transcript': memory.transcript if memory.transcription_status == 'completed' and memory.transcript else None,
-        'summary': memory.summary if memory.transcription_status == 'completed' else None,
-        'cognitive_mode': memory.cognitive_mode if memory.transcription_status == 'completed' else None,
-        'bucket': memory.bucket if memory.transcription_status == 'completed' else None,
-        'error': memory.processing_error if memory.transcription_status == 'failed' else None,
-        'created_at': memory.created_at.isoformat() if memory.created_at else None,
-        'processed_at': memory.processed_at.isoformat() if memory.processed_at else None,
+        'transcript': _safe_scalar(memory.transcript) if memory.transcription_status == 'completed' and memory.transcript else None,
+        'summary': _safe_scalar(memory.summary) if memory.transcription_status == 'completed' else None,
+        'cognitive_mode': _safe_scalar(memory.cognitive_mode) if memory.transcription_status == 'completed' else None,
+        'bucket': _safe_scalar(memory.bucket) if memory.transcription_status == 'completed' else None,
+        'error': _safe_scalar(memory.processing_error) if memory.transcription_status == 'failed' else None,
+        'created_at': memory.created_at.isoformat() if isinstance(getattr(memory, "created_at", None), datetime) else None,
+        'processed_at': memory.processed_at.isoformat() if isinstance(getattr(memory, "processed_at", None), datetime) else None,
     }
 
 
@@ -514,12 +531,14 @@ def _safe_json_loads(value, default):
 def _serialize_memory(memory: Memory) -> dict:
     return {
         "id": memory.id,
+        "url": getattr(memory, "source_url", getattr(memory, "url", None)),
         "title": getattr(memory, "title", None),
         "summary": getattr(memory, "summary", None),
         "content": getattr(memory, "content", getattr(memory, "cleaned_text", "")) or "",
         "category": getattr(memory, "category", None),
         "bucket": getattr(memory, "bucket", None),
         "tags": _safe_json_loads(getattr(memory, "tags", None), []),
+        "topic_graph": _safe_json_loads(getattr(memory, "topic_graph", None), []),
         "importance_score": getattr(memory, "importance_score", None),
         "importance_reasons": _safe_json_loads(getattr(memory, "importance_reasons", None), []),
         "platform": getattr(memory, "platform", None),

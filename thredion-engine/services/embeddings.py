@@ -175,7 +175,7 @@ def _hash_embed(text: str, dim: int = 384) -> np.ndarray:
         h = int(hashlib.md5(word.encode()).hexdigest(), 16)
         indices = [(h >> (j * 8)) % dim for j in range(4)]
         for idx in indices:
-            vec[idx] += 1.0 if (h % 2 == 0) else -1.0
+            vec[idx] += 1.0
 
     # Normalize
     norm = np.linalg.norm(vec)

@@ -16,7 +16,11 @@ from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
 import yt_dlp
-# from faster_whisper import WhisperModel (Deferred to avoid import hang)
+try:
+    from faster_whisper import WhisperModel  # type: ignore
+except Exception:  # pragma: no cover
+    WhisperModel = None
+whisper = WhisperModel
 
 from core.config import settings
 
@@ -24,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 # ── Global Whisper Model Cache ─────────────────────────────
 _whisper_model: Optional[Any] = None
+WHISPER_MODEL: Optional[Any] = None
 _model_lock = asyncio.Lock()
 
 
@@ -40,21 +45,27 @@ class TranscriptionResult:
 
 def _load_whisper_model_sync() -> Any:
     """Load faster-whisper model synchronously (safe for thread executors)."""
-    global _whisper_model
+    global _whisper_model, WHISPER_MODEL
     
+    if WHISPER_MODEL is not None:
+        _whisper_model = WHISPER_MODEL
+        return WHISPER_MODEL
     if _whisper_model is not None:
         return _whisper_model
     
     logger.info("Loading faster-whisper model (%s)...", settings.WHISPER_MODEL_SIZE)
     try:
-        from faster_whisper import WhisperModel
-        _whisper_model = WhisperModel(
+        model_cls = WhisperModel
+        if model_cls is None:
+            from faster_whisper import WhisperModel as model_cls
+        _whisper_model = model_cls(
             model_size_or_path=settings.WHISPER_MODEL_SIZE,
             device="cpu",
             compute_type="int8",
             num_workers=1,
             cpu_threads=2
         )
+        WHISPER_MODEL = _whisper_model
         logger.info("Whisper model loaded successfully")
         return _whisper_model
     except Exception as e:

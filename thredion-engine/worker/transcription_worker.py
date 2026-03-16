@@ -37,7 +37,7 @@ async def process_queue_message(message: QueueMessage) -> bool:
         url = job_data.get('url')
         user_id = job_data.get('user_id')
         
-        logger.info(f"[WORKER] Processing job {job_id[:8]}... for {user_id}")
+        logger.info(f"[WORKER] Processing job {str(job_id)[:8]}... for {user_id}")
         
         db = SessionLocal()
         try:
@@ -111,7 +111,7 @@ async def process_queue_message(message: QueueMessage) -> bool:
             
             db.commit()
             
-            logger.info(f"[WORKER] ✅ Job {job_id[:8]}... COMPLETE")
+            logger.info(f"[WORKER] ✅ Job {str(job_id)[:8]}... COMPLETE")
             return True
         
         except Exception as e:

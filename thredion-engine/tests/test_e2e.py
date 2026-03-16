@@ -28,7 +28,7 @@ class TestShortVideoE2E:
         4. LLM processes cognitive structure
         5. Response returned with all fields
         """
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         mock_process.return_value = {
             'status': 'completed',
@@ -86,7 +86,7 @@ class TestLongVideoE2E:
         4. Response returns immediately with job_id
         5. User begins polling for status
         """
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         # Step 1-3: Process returns immediately with job_id
         mock_process.return_value = {
@@ -121,7 +121,7 @@ class TestLongVideoE2E:
                 mock_memory = Mock()
                 mock_memory.transcription_job_id = job_id
                 mock_memory.transcription_status = 'processing'
-                mock_memory.user_id = "1234567890"
+                mock_memory.user_id = "00000000-0000-0000-0000-000000000000"
                 
                 mock_db = Mock()
                 mock_db.query.return_value.filter.return_value.first.return_value = mock_memory
@@ -149,7 +149,7 @@ class TestInstagramReelE2E:
         3. Processes transcription
         4. Returns cognitive structure
         """
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         mock_process.return_value = {
             'status': 'completed',
@@ -188,7 +188,7 @@ class TestTwitterLinkE2E:
         3. Processes if valid video
         4. Returns cognitive structure
         """
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         mock_process.return_value = {
             'status': 'completed',
@@ -225,7 +225,7 @@ class TestTikTokVideoE2E:
         3. Processes transcription
         4. Returns cognitive structure
         """
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         mock_process.return_value = {
             'status': 'completed',
@@ -258,7 +258,7 @@ class TestErrorHandlingE2E:
         """
         Test that invalid URLs are rejected gracefully.
         """
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         response = client.post(
             "/api/process-video?url=not-a-valid-url",
@@ -274,7 +274,7 @@ class TestErrorHandlingE2E:
         """
         Test timeout during transcription.
         """
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         mock_process.side_effect = TimeoutError("Transcription timeout")
         
         response = client.post(
@@ -290,7 +290,7 @@ class TestErrorHandlingE2E:
         """
         Test network errors during processing.
         """
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         mock_process.side_effect = ConnectionError("Network error")
         
         response = client.post(
@@ -310,7 +310,7 @@ class TestMultiplePlatformsE2E:
         """
         Test user processing videos from different platforms sequentially.
         """
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         # First: YouTube
         mock_process.return_value = {
@@ -350,7 +350,7 @@ class TestCognitiveStructureE2E:
     @patch('api.routes.get_current_user')
     async def test_learn_mode_structure(self, mock_auth, mock_process):
         """Test cognitive structure for 'learn' mode."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         mock_process.return_value = {
             'status': 'completed',
@@ -379,7 +379,7 @@ class TestCognitiveStructureE2E:
     @patch('api.routes.get_current_user')
     async def test_think_mode_structure(self, mock_auth, mock_process):
         """Test cognitive structure for 'think' mode."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         mock_process.return_value = {
             'status': 'completed',
@@ -405,7 +405,7 @@ class TestCognitiveStructureE2E:
     @patch('api.routes.get_current_user')
     async def test_reflect_mode_structure(self, mock_auth, mock_process):
         """Test cognitive structure for 'reflect' mode."""
-        mock_auth.return_value = Mock(phone="1234567890")
+        mock_auth.return_value = Mock(phone="00000000-0000-0000-0000-000000000000")
         
         mock_process.return_value = {
             'status': 'completed',

@@ -104,7 +104,7 @@ class TestVideoProcessingPipeline:
         with patch('services.pipeline.Memory', return_value=mock_memory):
             result = await process_video_url_async(
                 "https://youtube.com/watch?v=xyz",
-                "1234567890",
+                "00000000-0000-0000-0000-000000000000",
                 mock_db
             )
         
@@ -134,7 +134,7 @@ class TestDuplicateDetection:
         with patch('services.pipeline.Memory'):
             result = await process_video_url_async(
                 "https://youtube.com/watch?v=xyz",
-                "1234567890",
+                "00000000-0000-0000-0000-000000000000",
                 mock_db
             )
         
@@ -152,7 +152,7 @@ class TestPipelineErrorHandling:
         mock_db = MagicMock(spec=Session)
         
         with pytest.raises(ValueError):
-            await process_video_url_async("   ", "1234567890", mock_db)
+            await process_video_url_async("   ", "00000000-0000-0000-0000-000000000000", mock_db)
 
 
 class TestMemoryDatabaseIntegration:
@@ -210,7 +210,7 @@ class TestMemoryDatabaseIntegration:
                         with patch('services.pipeline.find_resurfaceable', return_value=[]):
                             result = await process_video_url_async(
                                 "https://youtube.com/watch?v=xyz",
-                                "1234567890",
+                                "00000000-0000-0000-0000-000000000000",
                                 mock_db
                             )
         
@@ -257,7 +257,7 @@ class TestLongVideoQueueing:
         with patch('services.pipeline.Memory', return_value=mock_memory):
             result = await process_video_url_async(
                 "https://youtube.com/watch?v=long",
-                "1234567890",
+                "00000000-0000-0000-0000-000000000000",
                 mock_db
             )
         

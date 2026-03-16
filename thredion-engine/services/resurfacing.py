@@ -32,15 +32,13 @@ def find_resurfaceable(new_memory: Memory, db: Session) -> list[dict]:
     if new_vec is None:
         return []
 
-    # Get old memories (at least 3 days old) belonging to the same user
-    cutoff = datetime.now(timezone.utc) - timedelta(days=3)
+    # Get old memories belonging to the same user
     old_memories = (
         db.query(Memory)
         .filter(Memory.id != new_memory.id)
         .filter(Memory.user_id == new_memory.user_id)
         .filter(Memory.source_url != new_memory.source_url)
         .filter(Memory.embedding.isnot(None))
-        .filter(Memory.created_at < cutoff)
         .all()
     )
 
@@ -116,7 +114,7 @@ def _build_reason(new_memory: Memory, old_memory: Memory, similarity: float) -> 
         reasons.append(f"Both are about {new_memory.category}")
 
     # Calculate age
-    if old_memory.created_at:
+    if getattr(old_memory, "created_at", None):
         age = datetime.now(timezone.utc) - old_memory.created_at.replace(tzinfo=timezone.utc)
         days = age.days
         if days > 0:

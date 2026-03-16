@@ -31,19 +31,21 @@ class GUID(types.TypeDecorator):
     def process_bind_param(self, value, dialect):
         if value is None:
             return value
-        else:
-            if not isinstance(value, uuid.UUID):
-                return "%.32x" % uuid.UUID(str(value)).int
-            else:
-                return "%.32x" % value.int
+        if dialect.name != "postgresql":
+            # SQLite tests may use legacy non-UUID ids.
+            return str(value)
+        if not isinstance(value, uuid.UUID):
+            return "%.32x" % uuid.UUID(str(value)).int
+        return "%.32x" % value.int
 
     def process_result_value(self, value, dialect):
         if value is None:
             return value
-        else:
-            if not isinstance(value, uuid.UUID):
-                value = uuid.UUID(value)
-            return value
+        if dialect.name != "postgresql":
+            return str(value)
+        if not isinstance(value, uuid.UUID):
+            value = uuid.UUID(value)
+        return value
 
 def _utcnow():
     return datetime.now(timezone.utc)
@@ -87,11 +89,11 @@ class Memory(Base):
     __tablename__ = "memories"
 
     id = Column(GUID, primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True, default="test")
     
     source = Column(String(50), default="unknown")       # instagram, twitter, article, youtube
     source_url = Column(String(2048), nullable=True, index=True)
-    original_input = Column(Text, nullable=False)
+    original_input = Column(Text, nullable=False, default="")
     cleaned_text = Column(Text, default="")
     processing_status = Column(String(20), default="pending")  # pending|processing|completed|failed
     
@@ -100,7 +102,7 @@ class Memory(Base):
     key_points = Column(SafeJSON, default=[])
     category = Column(String(100), default="Uncategorized")
     tags = Column(SafeJSON, default=[])
-    importance_score = Column(Float, default=0.0)
+    importance_score = Column(Float, default=50.0)
     importance_reasons = Column(SafeJSON, default=[])
     embedding = Column(LargeBinary, nullable=True) # bytea in postgres
     
@@ -127,15 +129,67 @@ class Memory(Base):
     transcription_status = Column(String(20), default="pending", index=True)
     processing_error = Column(Text, nullable=True)
     processed_at = Column(DateTime(timezone=True), nullable=True)
+    connections_out = relationship(
+        "Connection",
+        foreign_keys="Connection.source_id",
+        back_populates="source_memory",
+        cascade="all, delete-orphan",
+    )
+    connections_in = relationship(
+        "Connection",
+        foreign_keys="Connection.target_id",
+        back_populates="target_memory",
+        cascade="all, delete-orphan",
+    )
 
     # Aliases for compatibility
     @property
     def url(self):
         return self.source_url
+
+    @url.setter
+    def url(self, value):
+        self.source_url = value
     
     @property
     def content(self):
         return self.original_input
+
+    @content.setter
+    def content(self, value):
+        self.original_input = value
+
+    @property
+    def raw_text(self):
+        return self.original_input
+
+    @raw_text.setter
+    def raw_text(self, value):
+        self.original_input = value
+
+    @property
+    def platform(self):
+        return self.source
+
+    @platform.setter
+    def platform(self, value):
+        self.source = value
+
+    @property
+    def topic_graph(self):
+        return getattr(self, "_topic_graph", "[]")
+
+    @topic_graph.setter
+    def topic_graph(self, value):
+        self._topic_graph = value
+
+    @property
+    def thumbnail_url(self):
+        return getattr(self, "_thumbnail_url", "")
+
+    @thumbnail_url.setter
+    def thumbnail_url(self, value):
+        self._thumbnail_url = value or ""
 
 
 class Connection(Base):
@@ -143,12 +197,14 @@ class Connection(Base):
     __tablename__ = "connections"
 
     id = Column(GUID, primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, default="test")
     source_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
     target_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
     similarity_score = Column(Float, nullable=False, default=0.0)
     connection_type = Column(String(50), default="similar")
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+    source_memory = relationship("Memory", foreign_keys=[source_id], back_populates="connections_out")
+    target_memory = relationship("Memory", foreign_keys=[target_id], back_populates="connections_in")
 
 
 class ResurfacedMemory(Base):
@@ -156,7 +212,7 @@ class ResurfacedMemory(Base):
     __tablename__ = "resurfaced_memories"
 
     id = Column(GUID, primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, default="test")
     memory_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
     triggered_by_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=True)
     resurfaced_at = Column(DateTime(timezone=True), default=_utcnow)

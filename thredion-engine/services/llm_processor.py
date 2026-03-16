@@ -186,7 +186,7 @@ async def fallback_classification(text: str) -> CognitiveStructure:
     # Detect cognitive mode
     if any(word in text_lower for word in ["i think", "idea", "what if", "should", "could"]):
         mode = "think"
-    elif any(word in text_lower for word in ["feel", "dream", "reflection", "emotional", "anxiety", "happy"]):
+    elif any(word in text_lower for word in ["feel", "felt", "dream", "reflection", "emotional", "anxiety", "anxious", "happy"]):
         mode = "reflect"
     else:
         mode = "learn"
