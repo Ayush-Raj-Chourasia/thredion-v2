@@ -9,7 +9,7 @@ import json
 import sys
 from datetime import datetime
 
-PROD_URL = "https://thredion-api.azurewebsites.net"
+PROD_URL = "https://thredion-api-production.up.railway.app"
 STAGING_URL = "https://thredion-api-staging.azurewebsites.net"
 
 TIMEOUT = 30

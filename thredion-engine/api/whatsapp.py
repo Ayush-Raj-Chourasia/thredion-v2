@@ -1,22 +1,13 @@
 """
 Thredion Engine — WhatsApp Webhook (Twilio)
-Handles incoming WhatsApp messages, processes URLs, and replies with AI insights.
-"""
-
-import re
-import logging
-
-from fastapi import APIRouter, Request, Depends
-"""
-Thredion Engine — WhatsApp Webhook (Twilio)
 
 IMPORTANT: Twilio webhooks time out after 15 seconds.
 The cognitive pipeline (extract -> LLM -> embed -> DB) takes 30-60 s.
 
 Pattern used here:
-  1. Parse request -> return immediate TwiML "Got it, processing..."
-  2. Kick off pipeline in a background thread (own DB session)
-  3. When done, push the full result back via Twilio REST API
+    1. Parse request -> return immediate TwiML "Got it, processing..."
+    2. Kick off pipeline in a background thread (own DB session)
+    3. When done, push the full result back via Twilio REST API
 """
 
 import re
@@ -131,6 +122,8 @@ async def whatsapp_webhook(request: Request):
     The heavy pipeline runs in a background thread and
     replies to the user via Twilio REST API when finished.
     """
+    logger.info("[WhatsApp] Webhook hit")
+
     try:
         form_data = await request.form()
     except Exception:

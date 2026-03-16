@@ -11,7 +11,7 @@ Thredion is not just a link saver — it's a **cognitive layer** that understand
 | | Link |
 |---|---|
 | **Dashboard** | [thredion-v2.vercel.app](https://thredion-v2.vercel.app) |
-| **API** | [thredion-api.azurewebsites.net](https://thredion-api.azurewebsites.net) |
+| **API** | [thredion-api-production.up.railway.app](https://thredion-api-production.up.railway.app) |
 | **WhatsApp Bot** | [**Chat on WhatsApp →**](https://wa.me/14155238886?text=join%20deep-third) |
 
 > **How to connect the WhatsApp Bot:**
@@ -250,7 +250,7 @@ Dashboard runs at `http://localhost:3000`
 
 1. Create a free [Twilio account](https://www.twilio.com/try-twilio)
 2. Go to Messaging → Try it Out → WhatsApp Sandbox
-3. Set webhook URL to: `https://thredion-api.azurewebsites.net/api/whatsapp/webhook` (POST)
+3. Set webhook URL to: `https://thredion-api-production.up.railway.app/api/whatsapp/webhook` (POST)
 4. Add Twilio credentials to `.env`
 5. Join the sandbox: [**Open WhatsApp →**](https://wa.me/14155238886?text=join%20deep-third) (send **`join deep-third`**)
 6. Send any link to the bot and it processes through the full cognitive pipeline
@@ -411,10 +411,10 @@ python -m pytest tests/ -v
 
 | Component | Platform | URL |
 |-----------|----------|-----|
-| **Backend API** | Azure App Service (Free F1) | [thredion-api.azurewebsites.net](https://thredion-api.azurewebsites.net) |
+| **Backend API** | Railway | [thredion-api-production.up.railway.app](https://thredion-api-production.up.railway.app) |
 | **Dashboard** | Vercel | [thredion-v2.vercel.app](https://thredion-v2.vercel.app) |
 | **WhatsApp Bot** | Twilio Sandbox | [Chat on WhatsApp →](https://wa.me/14155238886?text=join%20deep-third) |
-| **API Docs** | Swagger UI | [thredion-api.azurewebsites.net/docs](https://thredion-api.azurewebsites.net/docs) |
+| **API Docs** | Swagger UI | [thredion-api-production.up.railway.app/docs](https://thredion-api-production.up.railway.app/docs) |
 
 ---
 
