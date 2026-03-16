@@ -1,25 +1,38 @@
 # Thredion — AI Cognitive Memory Engine
 
-> **Transform your social media saves into an intelligent, self-organizing knowledge system.**
+> Transform your social media saves, voice notes, reflections, and ideas into an intelligent, self-organizing knowledge system.
 
-Thredion is not just a link saver — it's a **cognitive layer** that understands, connects, and resurfaces your saved content. Think of it as an AI Second Brain that grows smarter with every link you send.
+Thredion is a WhatsApp-first AI cognitive layer that captures links, text, voice notes, dreams, reflections, and idea dumps — then processes them into structured memory. It does not just save content. It extracts meaning, classifies intent, generates summaries, creates embeddings, stores structured memories, and resurfaces useful insights later.
 
 ---
 
-## Try It Now
+## Live Links
 
-| | Link |
+| Component | Link |
 |---|---|
 | **Dashboard** | [thredion-v2.vercel.app](https://thredion-v2.vercel.app) |
 | **API** | [thredion-api-production.up.railway.app](https://thredion-api-production.up.railway.app) |
-| **WhatsApp Bot** | [**Chat on WhatsApp →**](https://wa.me/14155238886?text=join%20deep-third) |
+| **Health Check** | [thredion-api-production.up.railway.app/health](https://thredion-api-production.up.railway.app/health) |
+| **WhatsApp Bot** | [Chat on WhatsApp →](https://wa.me/14155238886?text=join%20deep-third) |
+| **API Docs** | [thredion-api-production.up.railway.app/docs](https://thredion-api-production.up.railway.app/docs) |
 
-> **How to connect the WhatsApp Bot:**
-> 1. Click the WhatsApp link above (or scan the QR code in Twilio Console)
-> 2. It opens WhatsApp with the Twilio Sandbox number **+1 (415) 523-8886**
-> 3. Send **`join deep-third`** to activate the sandbox
-> 4. Once connected, just **paste any link** (Instagram reel, YouTube video, article, tweet) and the bot will process it through the full cognitive pipeline
-> 5. Open the [Dashboard](https://thredion-v2.vercel.app) to see your memories, knowledge graph, and analytics
+---
+
+## Try It
+
+### WhatsApp Bot Setup
+
+1. Click the WhatsApp link above — it opens the Twilio Sandbox number **+1 (415) 523-8886**
+2. Send: `join deep-third`
+3. After joining, send any of the following:
+   - A YouTube link
+   - An Instagram reel or post link
+   - A Twitter/X post link
+   - A voice note
+   - A reflection or journal entry
+   - A dream
+   - A quick idea dump
+4. Open the [Dashboard](https://thredion-v2.vercel.app) to view saved memories, resurfaced insights, and the knowledge graph
 
 ---
 
@@ -31,19 +44,15 @@ Thredion is not just a link saver — it's a **cognitive layer** that understand
 
 ## System Architecture
 
-![System Architecture — WhatsApp → FastAPI Backend → Next.js Dashboard](assets/architecture-diagram.png)
+![System Architecture](assets/architecture-diagram.png)
 
----
-
-## Demo Video
-
-📹 **Watch the full walkthrough:** [Thredion Demo Video](https://drive.google.com/drive/folders/1H0TDkrnpHb5Y_FyryNmcYag22_wb7W8U?usp=sharing)
+![Thredion Cognitive Pipeline](assets/pipeline.png)
 
 ---
 
 ## The Problem
 
-We all save hundreds of Instagram reels, tweets, and articles — but never look at them again. They're buried, forgotten, and effectively **lost knowledge**.
+We all save hundreds of Instagram reels, tweets, and articles — but never look at them again. They're buried, forgotten, and effectively lost knowledge.
 
 Existing solutions just store links. They don't *understand* them.
 
@@ -51,24 +60,49 @@ Existing solutions just store links. They don't *understand* them.
 
 ## The Solution
 
-Thredion introduces **5 cognitive capabilities** that turn passive saving into active knowledge building:
+Thredion introduces a full cognitive pipeline that turns passive saving into active knowledge building.
+
+Users send content to a WhatsApp bot, and the system processes it through a production pipeline that:
+
+- Ingests text, voice notes, YouTube links, Instagram links, Twitter/X links, dreams, reflections, and idea dumps
+- Detects input type automatically
+- Extracts metadata and source content where possible
+- Transcribes audio using Faster-Whisper (CPU-optimized)
+- Cleans and normalizes text
+- Classifies entries into **Learn**, **Think**, or **Reflect**
+- Summarizes content
+- Generates vector embeddings
+- Stores structured memory in PostgreSQL
+- Retrieves and resurfaces relevant memories later
+
+---
+
+## Core Cognitive Modes
+
+| Mode | Description |
+|------|-------------|
+| **Learn 🔗** | External content — YouTube videos, Instagram posts, Twitter/X posts, articles, and any URL |
+| **Think 💡** | Original ideas, startup thoughts, theories, and observations |
+| **Reflect 🪞** | Dreams, emotional reflections, journaling, gratitude, and inner-state notes |
+
+---
+
+## 5 Cognitive Capabilities
 
 ### 1. Semantic Understanding
-Every saved link is processed through AI to extract meaning — not just tags, but a **hierarchical topic graph**.
+Every saved input is processed through AI to extract meaning — not just tags, but a hierarchical topic graph.
 
 ```
 Fitness → Bodyweight Training → Core Strength → Home Workout
 ```
 
 ### 2. Smart Resurfacing Engine
-When you save new content, Thredion automatically surfaces **forgotten insights** that are semantically related.
+When you save new content, Thredion automatically surfaces forgotten insights that are semantically related.
 
 > *"You saved a similar Python optimization trick 12 days ago"*
 
-This is real cognitive behavior — not just notifications.
-
 ### 3. Knowledge Graph
-Related ideas are automatically connected, forming a **personal knowledge network** you can visualize:
+Related ideas are automatically connected, forming a personal knowledge network you can visualize.
 
 ```
 Python optimization
@@ -79,164 +113,302 @@ Async programming reel
 ```
 
 ### 4. Importance Scoring (Explainable AI)
-Each memory gets a transparent score (0-100) based on:
-- **Content Richness** (0-25)
-- **Novelty** (0-25)
-- **Connectivity** (0-25)
-- **Topic Relevance** (0-25)
+Each memory gets a transparent score (0–100) based on:
 
-Every score comes with human-readable reasons — full explainability.
+| Factor | Weight |
+|--------|--------|
+| Content Richness | 0–25 |
+| Novelty | 0–25 |
+| Connectivity | 0–25 |
+| Topic Relevance | 0–25 |
+
+Every score comes with human-readable reasoning — full explainability.
 
 ### 5. Cognitive Dashboard
-Not just cards — a full cognitive interface with:
+A full cognitive interface with:
 - Recent Memories
 - Resurfaced Insights
-- Interactive Knowledge Graph
+- Interactive Knowledge Graph (force-directed)
 - Analytics & Category Distribution
 - Random Inspiration button
-- **Embedded Video/Post Players** — YouTube and Instagram content plays inline
+- Inline Video/Post Players — YouTube and Instagram content plays directly in the dashboard
 
 ---
 
-## ✨ Wow Factor Features
+## Cognitive Pipeline
 
-| Feature | Description |
-|---------|-------------|
-| **Inline Embeds** | YouTube videos and Instagram posts play directly inside the dashboard |
-| **Random Inspiration** | Rediscover a forgotten memory at the click of a button |
-| **Knowledge Graph** | Interactive force-directed graph connecting related memories |
-| **Smart Resurfacing** | Automatically recalls forgotten content when you save something related |
-| **Explainable AI** | Every importance score comes with transparent reasoning |
-| **6 Platforms** | Instagram, Twitter/X, YouTube, Reddit, TikTok, and any article URL |
-| **3-Tier Fallback** | Embedding: sentence-transformers → TF-IDF → hash; Classification: GPT → keywords |
-| **Cognitive Layer (v2)** | Support for Voice Notes, Startup Ideas, and Emotional Reflections |
-
----
-
-## 🧠 Cognitive Layer (v2) — New Features
-
-The Cognitive Layer expansion turns Thredion from a link saver into a **unified capture and structuring engine** for your daily life.
-
-### 1. Bot-First Multi-Input
-Send anything to the bot. It's no longer just links:
-- **Learn (🔗 Links)**: Reels, YouTube, Articles. Same as v1 but structured with mode tags.
-- **Think (💡 Ideas)**: Type your startup ideas, business observations, or theories.
-- **Reflect (🪞 Inner State)**: Log your dreams, emotional reflections, or daily gratitude.
-
-### 2. Voice-to-Mind (Transcription)
-Record a voice note of a spontaneous idea while walking or driving. The bot:
-- Transcribes using **Faster-Whisper** (CPU-optimized).
-- Summarizes the core insight.
-- Automatically places it in the right Layer (Learn/Think/Reflect).
-
-### 3. Smart Semantic Bucketing
-The AI doesn't just categorize; it **buckets**. It prefers your existing categories (e.g., "Marketing", "Health") to avoid fragmentation, and only creates new buckets when fundamentally new topics emerge.
-
-### 4. Actionability & Emotion
-Every "Think" entry receives an **Actionability Score (0-1)** telling you how ready the idea is for execution. "Reflect" entries capture your **Emotional Tone** (Motivated, Reflective, Anxious) to help metadata-aware resurfacing.
-
-### 5. Weekly Insight Dashboard
-A new Next.js interface at `/cognitive` that gives you a high-level view of your week:
-- How many items you learned.
-- How many original ideas you had.
-- Your top actionable insight of the week.
-
----
-
-## Architecture (Detail)
+When content is received via WhatsApp or the dashboard:
 
 ```
-┌────────────────────────┐
-│   WhatsApp Bot         │ ← User sends Instagram/Twitter/article link
-│   (Twilio Webhook)     │
-└──────────┬─────────────┘
-           │
-           ▼
-┌────────────────────────┐
-│   FastAPI Backend      │ ← thredion-engine
-│                        │
-│  ┌──────────────────┐  │
-│  │ Cognitive Engine  │  │
-│  │                  │  │
-│  │ • Extractor      │  │  Extracts content from any URL
-│  │ • Embeddings     │  │  sentence-transformers/all-MiniLM-L6-v2
-│  │ • Classifier     │  │  AI categorization + summarization
-│  │ • Knowledge Graph│  │  Connects related memories
-│  │ • Importance     │  │  Explainable scoring algorithm
-│  │ • Resurfacing    │  │  Surfaces forgotten insights
-│  └──────────────────┘  │
-│                        │
-│  SQLite Database       │
-└──────────┬─────────────┘
-           │
-           ▼
-┌────────────────────────┐
-│   Next.js Dashboard    │ ← thredion-dashboard
-│   (Tailwind CSS)       │
-│                        │
-│  • Memory Cards        │
-│  • Knowledge Graph     │
-│  • Resurfaced Panel    │
-│  • Analytics View      │
-│  • Search & Filters    │
-│  • Random Inspiration  │
-└────────────────────────┘
+ 1. CAPTURE       → Receive input from WhatsApp or dashboard
+ 2. DETECT        → Identify input type (link / voice / text / reflection)
+ 3. NORMALIZE     → Normalize payload structure
+ 4. EXTRACT       → Pull title, caption, content, thumbnail from URL
+ 5. TRANSCRIBE    → Convert voice notes to text (Faster-Whisper)
+ 6. CLEAN         → Normalize and clean extracted text
+ 7. CLASSIFY      → AI categorization into Learn / Think / Reflect
+ 8. BUCKET        → Place into existing topic buckets or create new ones
+ 9. SUMMARIZE     → Generate concise summary
+10. EMBED         → Generate 384-dim vector embedding (MiniLM-L6-v2)
+11. STORE         → Persist enriched memory to PostgreSQL
+12. CONNECT       → Build knowledge graph edges (cosine similarity > 0.55)
+13. SCORE         → Compute explainable importance score (0–100)
+14. RESURFACE     → Find and surface forgotten related memories
 ```
+
+---
+
+## WhatsApp Ingestion Flow
+
+```
+User
+  → WhatsApp
+  → Twilio WhatsApp Sandbox
+  → Railway FastAPI webhook (/api/whatsapp/webhook)
+  → Ingestion orchestrator
+  → Detection engine
+  → Extraction / Transcription
+  → Cleaner & Normalizer
+  → Classifier (Learn / Think / Reflect)
+  → Summarizer
+  → Embeddings
+  → PostgreSQL structured memory store
+  → Retrieval + Resurfacing engine
+```
+
+---
+
+## Authentication Flow
+
+```
+User opens dashboard (Vercel)
+  → Enters phone number
+  → POST /auth/send-otp
+  → OTP generated and stored
+  → User enters OTP
+  → POST /auth/verify-otp
+  → OTP verified
+  → JWT issued
+  → Authenticated dashboard access
+```
+
+---
+
+## Fallback Logic
+
+Thredion preserves memory value even when platforms restrict extraction.
+
+### YouTube Fallback
+| Attempt | Action |
+|---------|--------|
+| Primary | Extract metadata + transcript → summarize |
+| Fallback 1 | Transcript missing → summarize metadata only |
+| Fallback 2 | Metadata fetch fails → store raw URL as unresolved |
+| Fallback 3 | User commentary present → combine with available metadata |
+
+### Instagram Fallback
+| Attempt | Action |
+|---------|--------|
+| Primary | Extract caption and post metadata |
+| Fallback 1 | Extraction restricted → preserve raw URL |
+| Fallback 2 | Use user commentary as semantic fallback |
+| Fallback 3 | Create contextual memory if only link available |
+
+### Twitter/X Fallback
+| Attempt | Action |
+|---------|--------|
+| Primary | Extract tweet text, author, thread context |
+| Fallback 1 | Access restricted → preserve raw URL |
+| Fallback 2 | Use user-typed note with link |
+| Fallback 3 | Store unresolved link with user note |
+
+### Voice Note Fallback
+| Attempt | Action |
+|---------|--------|
+| Primary | Fetch media → transcribe → summarize → classify |
+| Fallback 1 | Partial transcription failure → salvage partial transcript |
+| Fallback 2 | Full failure → store audio metadata and source reference |
+
+> No capture event is ever lost.
+
+---
+
+## Resilience & Fallbacks (AI Stack)
+
+| Component | Primary | Fallback 1 | Fallback 2 |
+|-----------|---------|------------|------------|
+| **Embeddings** | sentence-transformers (MiniLM-L6-v2) | TF-IDF (sklearn) | Hash-based (MD5) |
+| **Classification** | OpenAI GPT / Groq | Keyword matching (20 categories) | — |
+| **Extraction** | Platform oEmbed API | HTML content scraping | Meta tag fallback |
+
+---
+
+## Memory Quality Metadata
+
+Each stored record carries quality metadata:
+
+| Field | Values |
+|-------|--------|
+| `extraction_status` | `full`, `partial`, `limited`, `unresolved` |
+| `confidence_score` | `high`, `medium`, `low` |
+| `source_type` | `text`, `audio`, `youtube`, `instagram`, `twitter` |
+| `used_fallback` | `yes`, `no` |
+| `user_context_present` | `yes`, `no` |
+
+---
+
+## Supported Platforms
+
+| Platform | Input Type | Embed Player |
+|----------|------------|--------------|
+| **YouTube** | Videos, Shorts | ✅ Inline player |
+| **Instagram** | Reels, Posts | ✅ Inline player |
+| **Twitter / X** | Tweets, Threads | — |
+| **Reddit** | Posts | — |
+| **TikTok** | Videos | — |
+| **Articles / Blogs** | Any URL | — |
+
+---
+
+## Edge Cases Handled
+
+- URL with no extractable content → falls back to meta tags → then to URL itself
+- No OpenAI key → keyword-based classification fallback
+- sentence-transformers not installed → TF-IDF fallback → hash-based fallback
+- Empty database → graceful empty states in dashboard
+- Duplicate URL → detected with URL normalization, user notified instead of re-saving
+- Concurrent duplicate submissions → thread-safe locking prevents race conditions
+- Duplicate graph connections → prevented at database level
+- Resurfacing cooldown → same memory won't resurface within 7 days
+- WhatsApp message with no URL → help reply sent
+- Multiple URLs in single message → processes up to 3
+- Invalid URL (no http/https) → 400 error with clear message
+- Image load failure → gracefully hidden in dashboard
+- API timeout → retry-safe, idempotent operations
+- Cascade delete → deleting memory removes connections and resurfaced entries
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| **Bot** | WhatsApp (Twilio Sandbox) |
-| **Backend** | Python / FastAPI |
-| **AI Embeddings** | sentence-transformers/all-MiniLM-L6-v2 |
-| **AI Classification** | OpenAI GPT-3.5 (with keyword fallback) |
-| **Similarity** | Cosine Similarity |
-| **Database** | SQLite (zero-config) |
+|-------|------------|
 | **Frontend** | Next.js 14 / React / Tailwind CSS |
+| **Frontend Hosting** | Vercel |
+| **Backend** | Python / FastAPI |
+| **Backend Hosting** | Railway (Gunicorn + Uvicorn workers) |
+| **Messaging** | Twilio WhatsApp Sandbox |
+| **Database** | Supabase PostgreSQL (connection pooler) |
+| **Auth** | OTP + JWT |
+| **LLM Providers** | OpenAI GPT, Groq |
+| **Embeddings** | sentence-transformers / all-MiniLM-L6-v2 |
+| **Similarity** | Cosine Similarity |
+| **Transcription** | Faster-Whisper (CPU-optimized) |
 | **Icons** | Lucide React |
 
 ---
 
-## Cognitive Pipeline
+## Live Deployment
 
-When a URL is received (via WhatsApp or dashboard):
+| Component | Platform | URL |
+|-----------|----------|-----|
+| **Frontend** | Vercel | [thredion-v2.vercel.app](https://thredion-v2.vercel.app) |
+| **Backend API** | Railway | [thredion-api-production.up.railway.app](https://thredion-api-production.up.railway.app) |
+| **WhatsApp Bot** | Twilio Sandbox | [Chat on WhatsApp →](https://wa.me/14155238886?text=join%20deep-third) |
+| **API Docs** | Swagger UI | [thredion-api-production.up.railway.app/docs](https://thredion-api-production.up.railway.app/docs) |
 
-```
-1. EXTRACT  → Pull title, caption, content, thumbnail from the URL
-2. EMBED    → Generate 384-dim vector embedding (MiniLM-L6-v2)
-3. CLASSIFY → AI categorization + summary + tags + topic graph
-4. STORE    → Save enriched memory to SQLite
-5. CONNECT  → Build knowledge graph edges (cosine similarity > 0.55)
-6. SCORE    → Compute explainable importance (0-100)
-7. RESURFACE → Find & surface forgotten related memories
+---
+
+## API Endpoints
+
+### Health
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Service health check |
+
+### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/auth/send-otp` | Send OTP to phone number |
+| `POST` | `/auth/verify-otp` | Verify OTP and issue JWT |
+
+### Memories
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/memories` | List all memories (search, filter, sort) |
+| `GET` | `/api/memories/{id}` | Get memory with connections |
+| `POST` | `/api/process?url=...` | Process URL through cognitive pipeline |
+| `DELETE` | `/api/memories/{id}` | Delete a memory |
+
+### Knowledge & Insights
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/graph` | Full knowledge graph (nodes + edges) |
+| `GET` | `/api/resurfaced` | Recently resurfaced insights |
+| `GET` | `/api/stats` | Dashboard statistics |
+| `GET` | `/api/categories` | Category distribution |
+| `GET` | `/api/random` | Random memory for inspiration |
+
+### Webhook
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/whatsapp/webhook` | Twilio WhatsApp webhook |
+
+---
+
+## Storage Model
+
+Production storage uses Supabase PostgreSQL. Core entities include:
+
+- `users`
+- `otp_codes`
+- `raw_messages`
+- `source_links`
+- `extracted_content`
+- `transcripts`
+- `summaries`
+- `embeddings`
+- `classifications`
+- `topic_buckets`
+- `resurfacing_candidates`
+- `insights`
+- `extraction_status` metadata
+- `confidence` metadata
+
+---
+
+## Environment Configuration
+
+```env
+NEXT_PUBLIC_API_URL=https://thredion-api-production.up.railway.app
+FRONTEND_URL=https://thredion-v2.vercel.app
+DATABASE_URL=<Supabase PostgreSQL pooler connection string>
+ENVIRONMENT=production
 ```
 
 ---
 
-## How to Run
+## How to Run Locally
 
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+
-- (Optional) OpenAI API key
-- (Optional) Twilio account for WhatsApp
+- OpenAI or Groq API key (optional — keyword fallback works without it)
+- Twilio account (optional — for WhatsApp bot)
 
-### Backend (thredion-engine)
+### Backend
 
 ```bash
 cd thredion-engine
-cp .env.example .env              # Edit with your API keys (optional)
+cp .env.example .env      # Add your API keys (optional)
 pip install -r requirements.txt
 python main.py
 ```
 
-Backend runs at `http://localhost:8000`
+Backend runs at `http://localhost:8000`  
 API docs at `http://localhost:8000/docs`
 
-### Frontend (thredion-dashboard)
+### Frontend
 
 ```bash
 cd thredion-dashboard
@@ -249,72 +421,11 @@ Dashboard runs at `http://localhost:3000`
 ### WhatsApp Bot Setup (Twilio Sandbox)
 
 1. Create a free [Twilio account](https://www.twilio.com/try-twilio)
-2. Go to Messaging → Try it Out → WhatsApp Sandbox
-3. Set webhook URL to: `https://thredion-api-production.up.railway.app/api/whatsapp/webhook` (POST)
+2. Go to **Messaging → Try it Out → WhatsApp Sandbox**
+3. Set the webhook URL to: `https://thredion-api-production.up.railway.app/api/whatsapp/webhook` (POST)
 4. Add Twilio credentials to `.env`
-5. Join the sandbox: [**Open WhatsApp →**](https://wa.me/14155238886?text=join%20deep-third) (send **`join deep-third`**)
-6. Send any link to the bot and it processes through the full cognitive pipeline
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/memories` | List all memories (search, filter, sort) |
-| `GET` | `/api/memories/{id}` | Get memory with connections |
-| `POST` | `/api/process?url=...` | Process URL through cognitive pipeline |
-| `DELETE` | `/api/memories/{id}` | Delete a memory |
-| `GET` | `/api/graph` | Full knowledge graph (nodes + edges) |
-| `GET` | `/api/resurfaced` | Recently resurfaced insights |
-| `GET` | `/api/stats` | Dashboard statistics |
-| `GET` | `/api/categories` | Category distribution |
-| `GET` | `/api/random` | Random memory for inspiration |
-| `POST` | `/api/whatsapp/webhook` | Twilio WhatsApp webhook |
-
----
-
-## Supported Platforms
-
-- **Instagram** — Reels, Posts (via oEmbed + meta tags) — **inline embed player**
-- **Twitter / X** — Tweets, Threads (via oEmbed)
-- **YouTube** — Videos, Shorts (via oEmbed) — **inline embed player**
-- **Reddit** — Posts (via JSON API)
-- **TikTok** — Videos (via oEmbed)
-- **Blog / Articles** — Any URL (via content extraction + BeautifulSoup)
-
----
-
-## Edge Cases Handled
-
-- URL with no extractable content → falls back to meta tags → then to URL itself
-- No OpenAI key → keyword-based classification fallback
-- sentence-transformers not installed → TF-IDF fallback → hash-based fallback
-- Empty database → graceful empty states in dashboard
-- Duplicate URL → detected with URL normalization, user notified instead of re-saving
-- Concurrent duplicate submissions → thread-safe locking prevents race conditions
-- Duplicate connections → prevented at database level
-- Resurfacing cooldown → same memory won't resurface within 7 days
-- WhatsApp message with no URL → help reply sent
-- Multiple URLs in single message → processes up to 3
-- Invalid URL (no http/https) → 400 error with clear message
-- Image load failure → gracefully hidden in dashboard
-- API timeout → retry-safe, idempotent operations
-- Cascade delete → deleting memory removes connections + resurfaced entries
-
----
-
-## Resilience & Fallbacks
-
-Thredion is designed to work **completely offline** with zero API keys:
-
-| Component | Primary | Fallback 1 | Fallback 2 |
-|-----------|---------|------------|------------|
-| **Embeddings** | sentence-transformers (MiniLM-L6-v2) | TF-IDF (sklearn) | Hash-based (MD5) |
-| **Classification** | OpenAI GPT-3.5 | Keyword matching (20 categories) | — |
-| **Extraction** | Platform oEmbed API | HTML content scraping | Meta tag fallback |
-
-This 3-tier architecture ensures the system never crashes — even without internet access or API keys.
+5. Join the sandbox: send `join deep-third` to **+1 (415) 523-8886**
+6. Send any link or voice note — it processes through the full cognitive pipeline
 
 ---
 
@@ -322,67 +433,64 @@ This 3-tier architecture ensures the system never crashes — even without inter
 
 ```
 thredion/
-├── assets/                       # README images
-│   ├── dashboard-preview.png     # Dashboard screenshot
-│   └── architecture-diagram.png  # System architecture diagram
+├── assets/
+│   ├── dashboard-preview.png
+│   ├── architecture-diagram.png
+│   └── pipeline.png
 │
 ├── thredion-engine/              # Python backend
 │   ├── main.py                   # FastAPI app entry point
 │   ├── requirements.txt
 │   ├── .env.example
 │   ├── core/
-│   │   └── config.py             # Central configuration
+│   │   └── config.py
 │   ├── db/
-│   │   ├── database.py           # SQLAlchemy setup
-│   │   └── models.py             # ORM models (with unique URL constraint)
+│   │   ├── database.py
+│   │   └── models.py
 │   ├── models/
-│   │   └── schemas.py            # Pydantic schemas
+│   │   └── schemas.py
 │   ├── api/
-│   │   ├── routes.py             # REST API endpoints
-│   │   └── whatsapp.py           # Twilio webhook
+│   │   ├── routes.py
+│   │   └── whatsapp.py
 │   ├── services/
-│   │   ├── pipeline.py           # Full cognitive pipeline orchestrator
-│   │   ├── extractor.py          # URL content extraction
-│   │   ├── embeddings.py         # Vector embedding generation
-│   │   ├── classifier.py         # AI classification & summarization
-│   │   ├── knowledge_graph.py    # Graph builder
-│   │   ├── importance.py         # Explainable importance scoring
-│   │   └── resurfacing.py        # Smart resurfacing engine
+│   │   ├── pipeline.py
+│   │   ├── extractor.py
+│   │   ├── embeddings.py
+│   │   ├── classifier.py
+│   │   ├── knowledge_graph.py
+│   │   ├── importance.py
+│   │   └── resurfacing.py
 │   └── tests/                    # 93 automated tests
-│       ├── conftest.py           # Shared fixtures (in-memory SQLite)
-│       ├── test_api.py           # API endpoint tests
-│       ├── test_database.py      # Database model tests
-│       ├── test_embeddings.py    # Embedding generation tests
-│       ├── test_pipeline.py      # Cognitive pipeline tests
-│       ├── test_services.py      # Service module tests
-│       └── test_demo_reliability.py  # Demo failure scenario tests
+│       ├── conftest.py
+│       ├── test_api.py
+│       ├── test_database.py
+│       ├── test_embeddings.py
+│       ├── test_pipeline.py
+│       ├── test_services.py
+│       └── test_demo_reliability.py
 │
-├── thredion-dashboard/           # Next.js frontend
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── layout.tsx
-│   │   │   ├── page.tsx          # Main dashboard page
-│   │   │   └── globals.css
-│   │   ├── components/
-│   │   │   ├── Header.tsx
-│   │   │   ├── MemoryCard.tsx
-│   │   │   ├── StatsBar.tsx
-│   │   │   ├── CategoryFilter.tsx
-│   │   │   ├── ResurfacedPanel.tsx
-│   │   │   ├── KnowledgeGraphView.tsx
-│   │   │   ├── StatsView.tsx
-│   │   │   └── InspireModal.tsx
-│   │   └── lib/
-│   │       ├── api.ts            # API client (with timeout & retry)
-│   │       ├── types.ts          # TypeScript types
-│   │       ├── utils.ts          # Helpers
-│   │       └── __tests__/
-│   │           └── test-plan.ts  # Frontend integration test plan
-│   ├── package.json
-│   ├── tailwind.config.js
-│   └── next.config.js
-│
-└── README.md
+└── thredion-dashboard/           # Next.js frontend
+    ├── src/
+    │   ├── app/
+    │   │   ├── layout.tsx
+    │   │   ├── page.tsx
+    │   │   └── globals.css
+    │   ├── components/
+    │   │   ├── Header.tsx
+    │   │   ├── MemoryCard.tsx
+    │   │   ├── StatsBar.tsx
+    │   │   ├── CategoryFilter.tsx
+    │   │   ├── ResurfacedPanel.tsx
+    │   │   ├── KnowledgeGraphView.tsx
+    │   │   ├── StatsView.tsx
+    │   │   └── InspireModal.tsx
+    │   └── lib/
+    │       ├── api.ts
+    │       ├── types.ts
+    │       └── utils.ts
+    ├── package.json
+    ├── tailwind.config.js
+    └── next.config.js
 ```
 
 ---
@@ -407,30 +515,36 @@ python -m pytest tests/ -v
 
 ---
 
-## Live Deployment
+## Wow Factor Features
 
-| Component | Platform | URL |
-|-----------|----------|-----|
-| **Backend API** | Railway | [thredion-api-production.up.railway.app](https://thredion-api-production.up.railway.app) |
-| **Dashboard** | Vercel | [thredion-v2.vercel.app](https://thredion-v2.vercel.app) |
-| **WhatsApp Bot** | Twilio Sandbox | [Chat on WhatsApp →](https://wa.me/14155238886?text=join%20deep-third) |
-| **API Docs** | Swagger UI | [thredion-api-production.up.railway.app/docs](https://thredion-api-production.up.railway.app/docs) |
+| Feature | Description |
+|---------|-------------|
+| **Inline Embeds** | YouTube and Instagram content plays directly inside the dashboard |
+| **Voice-to-Mind** | Send a voice note — it gets transcribed, summarized, and stored as a memory |
+| **Random Inspiration** | Rediscover a forgotten memory at the click of a button |
+| **Knowledge Graph** | Interactive force-directed graph connecting related memories |
+| **Smart Resurfacing** | Automatically recalls forgotten content when you save something related |
+| **Explainable AI** | Every importance score comes with transparent reasoning |
+| **6 Platforms** | Instagram, Twitter/X, YouTube, Reddit, TikTok, and any article URL |
+| **3-Tier Fallback** | Embeddings and classification never crash — always a fallback path |
+| **Multi-Input Bot** | Links, ideas, reflections, dreams, voice notes — all in one WhatsApp chat |
 
 ---
 
 ## Future Vision
 
-Thredion evolves beyond a saver into a **cognitive operating system** for human memory augmentation:
+Thredion is evolving toward a **cognitive operating system** for human memory augmentation:
 
-- Scheduled "Memory Digest" emails
-- Voice-note memory capture
+- Scheduled weekly Memory Digest emails
 - Browser extension for instant saves
 - Collaborative knowledge graphs
-- Advanced RAG for Q&A over your saved knowledge
+- Advanced RAG — Q&A over your entire saved knowledge base
+- Deeper personal knowledge graph navigation
+- Richer multimodal capture
 
 ---
 
-## Built for
+## Built For
 
 **Hack The Thread** — Turning Instagram Saves into a Knowledge Base
 

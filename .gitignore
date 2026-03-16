@@ -195,3 +195,4 @@ tmp/
 temp/
 !thredion-dashboard/src/lib/
 *.txt
+.kiro
