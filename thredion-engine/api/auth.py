@@ -71,11 +71,6 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
     token = authorization.split(" ", 1)[1]
-    if os.getenv("PYTEST_CURRENT_TEST") and token == "fake-token":
-        user = db.query(User).first()
-        if user:
-            return user
-        return User(id="test", phone_number="+10000000000")
     claims = _decode_token(token)
     phone_number = claims.get("sub", "")
 

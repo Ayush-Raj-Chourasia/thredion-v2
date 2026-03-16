@@ -89,7 +89,7 @@ class Memory(Base):
     __tablename__ = "memories"
 
     id = Column(GUID, primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True, default="test")
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     
     source = Column(String(50), default="unknown")       # instagram, twitter, article, youtube
     source_url = Column(String(2048), nullable=True, index=True)
@@ -197,7 +197,7 @@ class Connection(Base):
     __tablename__ = "connections"
 
     id = Column(GUID, primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, default="test")
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     source_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
     target_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
     similarity_score = Column(Float, nullable=False, default=0.0)
@@ -212,7 +212,7 @@ class ResurfacedMemory(Base):
     __tablename__ = "resurfaced_memories"
 
     id = Column(GUID, primary_key=True, default=uuid.uuid4)
-    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, default="test")
+    user_id = Column(GUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     memory_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=False)
     triggered_by_id = Column(GUID, ForeignKey("memories.id", ondelete="CASCADE"), nullable=True)
     resurfaced_at = Column(DateTime(timezone=True), default=_utcnow)

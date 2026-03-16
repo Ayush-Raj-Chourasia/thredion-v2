@@ -81,8 +81,6 @@ def classify_content(text: str, url: str = "") -> ClassificationResult:
     Uses OpenAI API if key is available, otherwise keyword-based fallback.
     """
     combined_text = f"{text} {url}".strip()
-    if os.getenv("PYTEST_CURRENT_TEST"):
-        return _classify_with_keywords(combined_text)
     
     if settings.OPENAI_API_KEY:
         try:
@@ -106,7 +104,6 @@ def classify_content(text: str, url: str = "") -> ClassificationResult:
         except Exception as e:
             logger.warning(f"Groq fallback failed: {e}. Falling back to keywords.")
 
-    return _classify_with_keywords(combined_text)
 
 
 def _classify_with_openai(text: str) -> ClassificationResult:
